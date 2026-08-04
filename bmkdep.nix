@@ -36,6 +36,7 @@ pkgs.callPackage (
     '';
 
     postInstall = ''
+      echo ">>> POSTINSTALL IS RUNNING, out=$out"
       # Ensure binaries and man directories are properly organized
       mkdir -p $out/bin
       mkdir -p $out/share/man/man1
