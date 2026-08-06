@@ -19,6 +19,9 @@ pkgs.callPackage (
   , bmake
   , makedepend
   , bmkdep
+  , texlive
+  , graphviz
+  , ghostscript
   }:
   stdenv.mkDerivation rec {
     pname = "mk-configure";
@@ -30,7 +33,14 @@ pkgs.callPackage (
       sha256 = "sha256-Y59CpaIhTxuUS+lJ05fowHI2cS1rwy2KACFik6+cqJA=";
     };
 
-    nativeBuildInputs = [ pkg-config patchelf bmake makedepend bmkdep ];
+    nativeBuildInputs = [
+      pkg-config patchelf bmake makedepend bmkdep
+      (texlive.combine {
+        scheme-medium = texlive.scheme-medium;
+        relsize = texlive.relsize;
+      })
+      graphviz ghostscript
+    ];
     buildInputs = [];
     outputs = [ "out" ];
 
@@ -106,6 +116,14 @@ pkgs.callPackage (
       MKC_SHAREDIR=$out/share/mk-configure \
       MKC_INCLUDEDIR=$out/include \
       "mkc.environ=CC=gcc CXX=g++ PATH=$BPATH"
+
+    # --- Build the presentation and install its PDF ---
+    # (custom installPhase bypasses the postInstall hook, so it must run here)
+    echo "=== Building presentation ==="
+    export PATH="$out/bin:$PATH"
+    cd presentation
+    "$out/bin/mkcmake" all PS2PDF=ps2pdf DOT=dot DVIPS=dvips LATEX=latex
+    install -D -m 0644 presentation.pdf "$out/share/doc/mk-configure/presentation.pdf"
     '';
 
     postInstall = ''
