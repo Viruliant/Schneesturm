@@ -90,6 +90,7 @@ outputs = { self, nixpkgs, flake-utils }:
           shellHook = ''
             echo "mk-configure + bmkdep development shell ready!"
             export PS1="[mk-configure-mono:\u@\h:\w] "
+            export PS2PDF=ps2pdf DOT=dot DVIPS=dvips LATEX=latex
             if [ -L "$PWD/result" ]; then
               export MANPATH="$MANPATH:$(readlink -f "$PWD/result")/share/man"
             fi

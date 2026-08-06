@@ -84,13 +84,16 @@ pkgs.callPackage (
 
       echo "=== Running configure ==="
       MKC_VERBOSE=1 bmake configure \
+        PREFIX=$out \
         "mkc.environ=CC=gcc CXX=g++ PATH=$BPATH"
     '';
 
     buildPhase = ''
       BPATH="$PWD/.bootstrap-bin:${pkgs.makedepend}/bin:${pkgs.bmake}/bin:${bmkdep}/bin:$PATH"
       export PATH="$BPATH"
-      bmake all "mkc.environ=CC=gcc CXX=g++ PATH=$BPATH"
+      bmake all \
+        PREFIX=$out \
+        "mkc.environ=CC=gcc CXX=g++ PATH=$BPATH"
     '';
 
     installPhase = ''
@@ -141,6 +144,7 @@ pkgs.callPackage (
 
       echo "=== Running configure ==="
       MKC_VERBOSE=1 bmake configure \
+        PREFIX=$out \
         "mkc.environ=CC=gcc CXX=g++ PATH=$BPATH"
     '';
 
