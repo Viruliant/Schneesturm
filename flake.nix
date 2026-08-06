@@ -85,6 +85,19 @@ outputs = { self, nixpkgs, flake-utils }:
             })
             pkgs.graphviz
             pkgs.ghostscript
+            pkgs.groff
+            pkgs.bison
+            pkgs.flex
+            pkgs.perl
+            pkgs.binutils
+            pkgs.gawk
+            pkgs.gnumake
+            pkgs.m4
+            pkgs.lua
+            pkgs.pkg-config
+            pkgs.glib.dev
+            pkgs.automake
+            pkgs.autoconf
           ];
           inputsFrom = [ mk-configure-drv bmkdep-drv ];
           shellHook = ''
