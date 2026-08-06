@@ -76,7 +76,16 @@ outputs = { self, nixpkgs, flake-utils }:
 
         devShells.default = pkgs.mkShell {
           name = "mk-configure-monorepo-shell";
-          packages = [ mk-configure-drv bmkdep-drv ];
+          packages = [
+            mk-configure-drv
+            bmkdep-drv
+            (pkgs.texlive.combine {
+              scheme-medium = pkgs.texlive.scheme-medium;
+              relsize = pkgs.texlive.relsize;
+            })
+            pkgs.graphviz
+            pkgs.ghostscript
+          ];
           inputsFrom = [ mk-configure-drv bmkdep-drv ];
           shellHook = ''
             echo "mk-configure + bmkdep development shell ready!"
