@@ -13,6 +13,22 @@
 let
   # defaultTestInputs Deps available ONLY to toggleable test phases
   # (checkInputs / installCheckInputs), never the normal build.
+  # Fake an FHS-installed lua for mk-configure's example tests: return the
+  # install dirs it would report under /usr/local instead of /nix/store.
+  fakePkgConfig = pkgs.runCommand "mkc-pkg-config" { } ''
+    mkdir -p "$out/bin"
+    cat > "$out/bin/pkg-config" <<'EOF'
+#!/bin/sh
+for arg in "$@"; do
+  case "$arg" in
+    *INSTALL_LMOD*) echo "/usr/local/share/lua/5.2"; exit 0 ;;
+    *INSTALL_CMOD*) echo "/usr/local/lib/lua/5.2"; exit 0 ;;
+  esac
+done
+exec ${pkgs.pkg-config}/bin/pkg-config "$@"
+EOF
+    chmod +x "$out/bin/pkg-config"
+  '';
   defaultTestInputs = with pkgs; [
     (texlive.combine {
       scheme-medium = texlive.scheme-medium;
@@ -28,25 +44,11 @@ let
     gnumake
     m4
     lua
-    (runCommand "mkc-pkg-config" { } ''
-      mkdir -p "$out/bin"
-      cat > "$out/bin/pkg-config" <<'EOF'
-#!/bin/sh
-# Fake an FHS-installed lua for mk-configure's example tests: return the
-# install dirs it would report under /usr/local instead of /nix/store.
-for arg in "$@"; do
-  case "$arg" in
-    *INSTALL_LMOD*) echo "/usr/local/share/lua/5.2"; exit 0 ;;
-    *INSTALL_CMOD*) echo "/usr/local/lib/lua/5.2"; exit 0 ;;
-  esac
-done
-exec ${pkg-config}/bin/pkg-config "$@"
-EOF
-            chmod +x "$out/bin/pkg-config"
-    '')
+    fakePkgConfig
     glib.dev
     automake
     autoconf
+    texinfo
     zlib
     zlib.dev
   ];
@@ -253,15 +255,47 @@ pkgs.callPackage (
     checkPhase = ''
       runHook preCheck
       ${testShellHook}
-      echo "running triggered test!"
+      # Remember the source/build root: installPhase leaves the shell inside
+      # presentation/, so installCheckPhase must not rely on $PWD.
+      export MK_ROOT="$PWD"
+      echo "pre-install sanity check (source root: $MK_ROOT)"
       runHook postCheck
     '';
 
+    # The examples test-suite only makes sense against an installed
+    # mk-configure (it uses $out/bin/mkcmake and the installed
+    # builtins/features/libexec), so run it in the installCheck stage.
+    # It is gated entirely by `runTests` -> doInstallCheck below: when
+    # runTests is false, installCheckPhase (and thus postInstallCheck) is
+    # skipped and no test/inputs are pulled in.
     installCheckPhase = ''
       runHook preInstallCheck
       ${testShellHook}
-      echo "running triggered test!"
+      echo "running install check (source root: $MK_ROOT)"
       runHook postInstallCheck
+    '';
+
+    postInstallCheck = ''
+      echo "running the examples test-suite (mkcmake -f MKCmakefile test)"
+
+      BPATH="$PWD/.bootstrap-bin:${pkgs.makedepend}/bin:${pkgs.bmake}/bin:${bmkdep}/bin:$PATH"
+      export PATH="$BPATH"
+
+      mkdir -p "$out/share/doc/mk-configure"
+
+      # Same command that works in the dev-shell, but pointed at the
+      # just-installed $out, and tee'd into a log shipped in $out.
+      (
+        cd "$MK_ROOT/examples"
+        set -o pipefail
+        export PATH="$PWD/helpers:${fakePkgConfig}/bin:$out/libexec/mk-configure:$out/bin:$PATH"
+        "$out/bin/mkcmake" -f MKCmakefile test 2>&1 \
+          | tee "$out/share/doc/mk-configure/test-output.log"
+      )
+      if [ ! -s "$out/share/doc/mk-configure/test-output.log" ]; then
+        echo "ERROR: installCheck produced no test log" >&2
+        exit 1
+      fi
     '';
 
     # Expose the lua test environment so the flake/devShell can inherit it.
