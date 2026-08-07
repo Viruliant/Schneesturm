@@ -8,7 +8,7 @@
 # where {$var} is the phase name there is a 
 # `pre{$var}`, `{$var}Phase`, and `post{$var}` for each phase
 #################################################################
-{ pkgs }:
+{ pkgs, runTests ? false }:
 
 pkgs.callPackage (
   { lib
@@ -22,16 +22,19 @@ pkgs.callPackage (
   , texlive
   , graphviz
   , ghostscript
+  , runTests
   }:
   stdenv.mkDerivation rec {
     pname = "mk-configure";
-    version = "f3dd0ad13679f06570ca887516c4d7f1e785469c";
+    version = "55a5ce31bfbb4bc215640df731908ddf6d3a7664";
+    # nix-shell -p nix-prefetch-github --run "nix-prefetch-github Viruliant mk-configure --rev 55a5ce31bfbb4bc215640df731908ddf6d3a7664"
     src = fetchFromGitHub {
       owner = "Viruliant";
       repo = pname;
       rev = version;
-      sha256 = "sha256-Y59CpaIhTxuUS+lJ05fowHI2cS1rwy2KACFik6+cqJA=";
+      sha256 = "sha256-ZELo72rhvvPtPAmi7ARbseI0SE+S2bboebeM7rmRmLc=";
     };
+
 
     nativeBuildInputs = [
       pkg-config patchelf bmake makedepend bmkdep
@@ -43,6 +46,21 @@ pkgs.callPackage (
     ];
     buildInputs = [];
     outputs = [ "out" ];
+
+    doCheck = runTests;
+    doInstallCheck = runTests;
+
+    checkPhase = ''
+      runHook preCheck
+      echo "running triggered test!"
+      runHook postCheck
+    '';
+
+    installCheckPhase = ''
+      runHook preInstallCheck
+      echo "running triggered test!"
+      runHook postInstallCheck
+    '';
 
     configurePhase = ''
       echo "=== Bootstrap mkc helpers ==="
@@ -194,4 +212,4 @@ pkgs.callPackage (
       platforms = lib.platforms.unix;
     };
   }
-) { }
+) { inherit runTests; }

@@ -19,6 +19,11 @@ outputs = { self, nixpkgs, flake-utils }:
   flake-utils.lib.eachDefaultSystem (system:
     let
       # =====================================================================
+      # Toggle: when set to true, runs additional build-time tests
+      # test!". Set to false to skip it.
+      enable_runTests = true;
+      # nix build .#mk-configure --no-link --rebuild -L
+      # =====================================================================
       bmkdep-drv # NetBSD version of mkdep
         = pkgs.bmkdep; 
       # =====================================================================
@@ -28,7 +33,10 @@ outputs = { self, nixpkgs, flake-utils }:
       # all nix files above here in `default.nix` style
       pkgs = (import nixpkgs { inherit system; }).extend (final: prev: {
         bmkdep       = import ./bmkdep.nix       { pkgs = final; };
-        mk-configure = import ./mk-configure.nix { pkgs = final; };
+        mk-configure = import ./mk-configure.nix {
+          pkgs = final;
+          runTests = enable_runTests;
+        };
         # my-new-pkg   = import ./my-new-pkg.nix   { pkgs = final; };
       }); # all nix files above here in `default.nix` style
       # =====================================================================
