@@ -84,62 +84,24 @@ outputs = { self, nixpkgs, flake-utils }:
 
         devShells.default = pkgs.mkShell {
           name = "mk-configure-monorepo-shell";
+          # Inherit the lua test environment from the package: the same
+          # test-only inputs the check/installCheck phases use, plus the real
+          # pkg-config the wrapper shells out to.
           packages = [
             mk-configure-drv
             bmkdep-drv
-            (pkgs.texlive.combine {
-              scheme-medium = pkgs.texlive.scheme-medium;
-              relsize = pkgs.texlive.relsize;
-            })
-            pkgs.graphviz
-            pkgs.ghostscript
-            pkgs.groff
-            pkgs.bison
-            pkgs.flex
-            pkgs.perl
-            pkgs.binutils
-            pkgs.gawk
-            pkgs.gnumake
-            pkgs.m4
-            pkgs.lua
-            (pkgs.runCommand "mkc-pkg-config" { } ''
-              mkdir -p "$out/bin"
-              cat > "$out/bin/pkg-config" <<'EOF'
-#!/bin/sh
-# Fake an FHS-installed lua for mk-configure's example tests: return the
-# install dirs it would report under /usr/local instead of /nix/store.
-for arg in "$@"; do
-  case "$arg" in
-    *INSTALL_LMOD*) echo "/usr/local/share/lua/5.2"; exit 0 ;;
-    *INSTALL_CMOD*) echo "/usr/local/lib/lua/5.2"; exit 0 ;;
-  esac
-done
-exec ${pkgs.pkg-config}/bin/pkg-config "$@"
-EOF
-              chmod +x "$out/bin/pkg-config"
-            '')
+            mk-configure-drv.passthru.testInputs
             pkgs.pkg-config
-            pkgs.glib.dev
-            pkgs.automake
-            pkgs.autoconf
-            pkgs.zlib
-            pkgs.zlib.dev
           ];
           inputsFrom = [ mk-configure-drv bmkdep-drv ];
           shellHook = ''
             echo "mk-configure + bmkdep development shell ready!"
             export PS1="[mk-configure-mono:\u@\h:\w] "
-            export PS2PDF=ps2pdf DOT=dot DVIPS=dvips LATEX=latex
-            # mk-configure's example tests (hello_lua{1,2,3}) expect LUA_LMODDIR /
-            # LUA_CMODDIR to resolve to FHS-style paths and expect the lua
-            # pkg-config checks to run. nixpkgs' lua exports store paths for
-            # these vars (which would (a) leak /nix/store into test output and
-            # (b) suppress the _mkc_pkgconfig_lua.* checks), so unset them and
-            # let the mkc-pkg-config wrapper provide /usr/local-style values.
-            unset LUA_LMODDIR LUA_CMODDIR
-            # Test helpers are installed by the derivation into libexec so the
-            # examples/MKCmakefile "run tests after installing" flow can find
-            # mkc_test_helper etc. from anywhere.
+            # The shared env setup the test phases run (unset LUA_* so the
+            # mkc-pkg-config wrapper provides /usr/local paths).
+            ${mk-configure-drv.passthru.testShellHook}
+            # Test helpers get installed into libexec so the examples flow can
+            # find mkc_test_helper etc. from anywhere.
             export PATH="${mk-configure-drv}/libexec/mk-configure:$PATH"
             if [ -L "$PWD/result" ]; then
               export MANPATH="$MANPATH:$(readlink -f "$PWD/result")/share/man"

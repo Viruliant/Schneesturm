@@ -8,12 +8,11 @@
 # where {$var} is the phase name there is a 
 # `pre{$var}`, `{$var}Phase`, and `post{$var}` for each phase
 #################################################################
-{ pkgs, runTests ? false, testInputs ? null }:
+{ pkgs, runTests ? false, testInputs ? null, testShellHook ? null }:
 
 let
-  # Deps available ONLY to the toggleable check/installCheck phases
-  # (checkInputs / installCheckInputs), never the normal build. Kept
-  # in the package's own default.nix so the flake only toggles the bool.
+  # defaultTestInputs Deps available ONLY to toggleable test phases
+  # (checkInputs / installCheckInputs), never the normal build.
   defaultTestInputs = with pkgs; [
     (texlive.combine {
       scheme-medium = texlive.scheme-medium;
@@ -29,28 +28,38 @@ let
     gnumake
     m4
     lua
-    #     (runCommand "mkc-pkg-config" { } ''
-    #       mkdir -p "$out/bin"
-    #       cat > "$out/bin/pkg-config" <<'EOF'
-    # #!/bin/sh
-    # # Fake an FHS-installed lua for mk-configure's example tests.
-    # for arg in "$@"; do
-    #   case "$arg" in
-    #     *INSTALL_LMOD*) echo "/usr/local/share/lua/5.2"; exit 0 ;;
-    #     *INSTALL_CMOD*) echo "/usr/local/lib/lua/5.2"; exit 0 ;;
-    #   esac
-    # done
-    # exec ${pkgs.pkg-config}/bin/pkg-config "$@"
-    # EOF
-    #       chmod +x "$out/bin/pkg-config"
-    #     '')
+    (runCommand "mkc-pkg-config" { } ''
+      mkdir -p "$out/bin"
+      cat > "$out/bin/pkg-config" <<'EOF'
+#!/bin/sh
+# Fake an FHS-installed lua for mk-configure's example tests: return the
+# install dirs it would report under /usr/local instead of /nix/store.
+for arg in "$@"; do
+  case "$arg" in
+    *INSTALL_LMOD*) echo "/usr/local/share/lua/5.2"; exit 0 ;;
+    *INSTALL_CMOD*) echo "/usr/local/lib/lua/5.2"; exit 0 ;;
+  esac
+done
+exec ${pkg-config}/bin/pkg-config "$@"
+EOF
+            chmod +x "$out/bin/pkg-config"
+    '')
     glib.dev
     automake
     autoconf
     zlib
     zlib.dev
   ];
+  # Env setup for the lua example tests: nixpkgs' lua exports LUA_LMODDIR /
+  # LUA_CMODDIR as store paths which would (a) leak /nix/store into test output
+  # and (b) suppress the _mkc_pkgconfig_lua.* checks, so unset them and let the
+  # mkc-pkg-config wrapper provide FHS-style /usr/local values instead.
+  defaultTestShellHook = ''
+    export PS2PDF=ps2pdf DOT=dot DVIPS=dvips LATEX=latex
+    unset LUA_LMODDIR LUA_CMODDIR
+  '';
   resolvedTestInputs = if testInputs == null then defaultTestInputs else testInputs;
+  resolvedTestShellHook = if testShellHook == null then defaultTestShellHook else testShellHook;
 in
 pkgs.callPackage (
   { lib
@@ -66,6 +75,7 @@ pkgs.callPackage (
   , ghostscript
   , runTests
   , testInputs
+  , testShellHook
   }:
   stdenv.mkDerivation rec {
     pname = "mk-configure";
@@ -242,15 +252,22 @@ pkgs.callPackage (
 
     checkPhase = ''
       runHook preCheck
+      ${testShellHook}
       echo "running triggered test!"
       runHook postCheck
     '';
 
     installCheckPhase = ''
       runHook preInstallCheck
+      ${testShellHook}
       echo "running triggered test!"
       runHook postInstallCheck
     '';
+
+    # Expose the lua test environment so the flake/devShell can inherit it.
+    passthru = {
+      inherit testInputs testShellHook;
+    };
 
     meta = {
       description = "Build system on top of bmake";
@@ -259,4 +276,4 @@ pkgs.callPackage (
       platforms = lib.platforms.unix;
     };
   }
-) { inherit runTests; testInputs = resolvedTestInputs; }
+) { inherit runTests; testInputs = resolvedTestInputs; testShellHook = resolvedTestShellHook; }
