@@ -117,6 +117,27 @@ pkgs.callPackage (
       MKC_INCLUDEDIR=$out/include \
       "mkc.environ=CC=gcc CXX=g++ PATH=$BPATH"
 
+    # --- Install the regression-test helper scripts ---
+    # (main.mk excludes them from the default install via
+    #  NODEPS += install-examples/helpers:install; the examples/MKCmakefile
+    #  test flow needs mkc_test_helper etc. on PATH)
+    bmake install-examples/helpers \
+      PREFIX=$out \
+      MKC_LIBEXECDIR=$out/libexec/mk-configure \
+      MKC_SHAREDIR=$out/share/mk-configure \
+      MKC_INCLUDEDIR=$out/include \
+      "mkc.environ=CC=gcc CXX=g++ PATH=$BPATH"
+
+    # examples/helpers/Makefile has an upstream bug: mkc_test_helper is listed
+    # twice in SCRIPTS and mkc_test_helper3 is omitted, so install-examples/helpers
+    # never ships it. examples/requirements and tests/create_cachedir need it.
+    install -m 0755 examples/helpers/mkc_test_helper3 "$out/libexec/mk-configure/mkc_test_helper3"
+
+    # bmake >= 20260313 emits .error as "bmake[N]: <file>:<line>: \"msg\"" instead
+    # of "bmake: ... line <N>: \"msg\"". Update mkc_test_helper's normalization
+    # rule so the test-suite comparisons still match (tests/test_subprj_dash).
+    sed -i 's|bmake:\.\*line \[0-9\]\[0-9\]\*: "|bmake:\[^"\]\*: "|' "$out/libexec/mk-configure/mkc_test_helper"
+
     # --- Build the presentation and install its PDF ---
     # (custom installPhase bypasses the postInstall hook, so it must run here)
     echo "=== Building presentation ==="
