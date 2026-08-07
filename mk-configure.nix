@@ -8,8 +8,50 @@
 # where {$var} is the phase name there is a 
 # `pre{$var}`, `{$var}Phase`, and `post{$var}` for each phase
 #################################################################
-{ pkgs, runTests ? false }:
+{ pkgs, runTests ? false, testInputs ? null }:
 
+let
+  # Deps available ONLY to the toggleable check/installCheck phases
+  # (checkInputs / installCheckInputs), never the normal build. Kept
+  # in the package's own default.nix so the flake only toggles the bool.
+  defaultTestInputs = with pkgs; [
+    (texlive.combine {
+      scheme-medium = texlive.scheme-medium;
+      relsize = texlive.relsize;
+    })
+    ghostscript
+    groff
+    bison
+    flex
+    perl
+    binutils
+    gawk
+    gnumake
+    m4
+    lua
+    #     (runCommand "mkc-pkg-config" { } ''
+    #       mkdir -p "$out/bin"
+    #       cat > "$out/bin/pkg-config" <<'EOF'
+    # #!/bin/sh
+    # # Fake an FHS-installed lua for mk-configure's example tests.
+    # for arg in "$@"; do
+    #   case "$arg" in
+    #     *INSTALL_LMOD*) echo "/usr/local/share/lua/5.2"; exit 0 ;;
+    #     *INSTALL_CMOD*) echo "/usr/local/lib/lua/5.2"; exit 0 ;;
+    #   esac
+    # done
+    # exec ${pkgs.pkg-config}/bin/pkg-config "$@"
+    # EOF
+    #       chmod +x "$out/bin/pkg-config"
+    #     '')
+    glib.dev
+    automake
+    autoconf
+    zlib
+    zlib.dev
+  ];
+  resolvedTestInputs = if testInputs == null then defaultTestInputs else testInputs;
+in
 pkgs.callPackage (
   { lib
   , stdenv
@@ -23,6 +65,7 @@ pkgs.callPackage (
   , graphviz
   , ghostscript
   , runTests
+  , testInputs
   }:
   stdenv.mkDerivation rec {
     pname = "mk-configure";
@@ -35,7 +78,6 @@ pkgs.callPackage (
       sha256 = "sha256-ZELo72rhvvPtPAmi7ARbseI0SE+S2bboebeM7rmRmLc=";
     };
 
-
     nativeBuildInputs = [
       pkg-config patchelf bmake makedepend bmkdep
       (texlive.combine {
@@ -46,21 +88,6 @@ pkgs.callPackage (
     ];
     buildInputs = [];
     outputs = [ "out" ];
-
-    doCheck = runTests;
-    doInstallCheck = runTests;
-
-    checkPhase = ''
-      runHook preCheck
-      echo "running triggered test!"
-      runHook postCheck
-    '';
-
-    installCheckPhase = ''
-      runHook preInstallCheck
-      echo "running triggered test!"
-      runHook postInstallCheck
-    '';
 
     configurePhase = ''
       echo "=== Bootstrap mkc helpers ==="
@@ -205,6 +232,26 @@ pkgs.callPackage (
         "mkc.environ=CC=gcc CXX=g++ PATH=$BPATH"
     '';
 
+    doCheck = runTests;
+    doInstallCheck = runTests;
+
+    # Only added to PATH during checkPhase / installCheckPhase,
+    # never during the normal build.
+    checkInputs = testInputs;
+    installCheckInputs = testInputs;
+
+    checkPhase = ''
+      runHook preCheck
+      echo "running triggered test!"
+      runHook postCheck
+    '';
+
+    installCheckPhase = ''
+      runHook preInstallCheck
+      echo "running triggered test!"
+      runHook postInstallCheck
+    '';
+
     meta = {
       description = "Build system on top of bmake";
       homepage = "https://github.com/cheusov/mk-configure";
@@ -212,4 +259,4 @@ pkgs.callPackage (
       platforms = lib.platforms.unix;
     };
   }
-) { inherit runTests; }
+) { inherit runTests; testInputs = resolvedTestInputs; }
