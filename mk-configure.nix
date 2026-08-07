@@ -90,6 +90,14 @@ pkgs.callPackage (
       sha256 = "sha256-ZELo72rhvvPtPAmi7ARbseI0SE+S2bboebeM7rmRmLc=";
     };
 
+    # examples/libdeps/test.mk blanks any absolute token whose path does not
+    # contain the literal substring "mk-configure". In the nix build the source
+    # lives under /build/source, so cross-directory headers resolved through
+    # -I (progs/foobaz -> libs/libfoo/foo.h, ...) were stripped and the
+    # libdeps "depends" subsection failed. Key the filter on the project root
+    # (${.CURDIR}) instead of the name substring.
+    patches = [ ./mk-configure-libdeps.patch ];
+
     nativeBuildInputs = [
       pkg-config patchelf bmake makedepend bmkdep
       (texlive.combine {

@@ -1,0 +1,11 @@
+--- a/examples/libdeps/test.mk	2026-08-07 16:56:40.645315500 -0500
++++ b/examples/libdeps/test.mk	2026-08-07 16:56:40.647495675 -0500
+@@ -18,7 +18,7 @@
+ 	echo =========== depends ============; \
+ 	${MAKE} -j4 depend > /dev/null; \
+ 	mkc_long_lines `find ${.CURDIR} -type f -name '.depend_*'` | \
+-	awk '!/^#/ {for (i=1; i <= NF; ++i) if ($$i ~ /^\// && $$i !~ /mk-configure/) $$i = ""; print $$0; }' | \
++	awk -v top='${.CURDIR}/' '!/^#/ {for (i=1; i <= NF; ++i) if ($$i ~ /^\// && $$i !~ "^" top) $$i = ""; print $$0; }' | \
+ 	awk '{$$1 = $$1; gsub(/[.]o[ps]/, ".o"); print $$0}' | sort | \
+ 	awk ' \
+ 	    / foo[.]o.*:.*[^a-z]foo[.]h/ { foo_foo_ok = 1; } \
