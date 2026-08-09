@@ -20,61 +20,7 @@
   , ghostscript
   , testers
   , callPackage
-#   , runTests
-#   , testInputs
-#   , testShellHook
 }: let
-#   # defaultTestInputs Deps available ONLY to toggleable test phases
-#   # (checkInputs / installCheckInputs), never the normal build.
-#   # Fake an FHS-installed lua for mk-configure's example tests: return the
-#   # install dirs it would report under /usr/local instead of /nix/store.
-#   fakePkgConfig = pkgs.runCommand "mkc-pkg-config" { } ''
-#     mkdir -p "$out/bin"
-#     cat > "$out/bin/pkg-config" <<'EOF'
-# #!/bin/sh
-# for arg in "$@"; do
-#   case "$arg" in
-#     *INSTALL_LMOD*) echo "/usr/local/share/lua/5.2"; exit 0 ;;
-#     *INSTALL_CMOD*) echo "/usr/local/lib/lua/5.2"; exit 0 ;;
-#   esac
-# done
-# exec ${pkgs.pkg-config}/bin/pkg-config "$@"
-# EOF
-#     chmod +x "$out/bin/pkg-config"
-#   '';
-#   defaultTestInputs = with pkgs; [
-#     (texlive.combine {
-#       scheme-medium = texlive.scheme-medium;
-#       relsize = texlive.relsize;
-#     })
-#     ghostscript
-#     groff
-#     bison
-#     flex
-#     perl
-#     binutils
-#     gawk
-#     gnumake
-#     m4
-#     lua
-#     fakePkgConfig
-#     glib.dev
-#     automake
-#     autoconf
-#     texinfo
-#     zlib
-#     zlib.dev
-#   ];
-#   # Env setup for the lua example tests: nixpkgs' lua exports LUA_LMODDIR /
-#   # LUA_CMODDIR as store paths which would (a) leak /nix/store into test output
-#   # and (b) suppress the _mkc_pkgconfig_lua.* checks, so unset them and let the
-#   # mkc-pkg-config wrapper provide FHS-style /usr/local values instead.
-#   defaultTestShellHook = ''
-#     export PS2PDF=ps2pdf DOT=dot DVIPS=dvips LATEX=latex
-#     unset LUA_LMODDIR LUA_CMODDIR
-#   '';
-#   resolvedTestInputs = if testInputs == null then defaultTestInputs else testInputs;
-#   resolvedTestShellHook = if testShellHook == null then defaultTestShellHook else testShellHook;
   in
 
   stdenv.mkDerivation ( finalAttrs: {
