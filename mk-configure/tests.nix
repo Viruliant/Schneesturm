@@ -2,63 +2,91 @@
   testers,
   mk-configure,
   finalAttrs,
+  pkgs,
+}: let
+  # Fake an FHS-installed lua for mk-configure's example tests: return the
+  # install dirs it would report under /usr/local instead of /nix/store.
+  fakePkgConfig = pkgs.runCommand "mkc-pkg-config" { } ''
+    mkdir -p "$out/bin"
+    cat > "$out/bin/pkg-config" <<'EOF'
+#!/bin/sh
+for arg in "$@"; do
+  case "$arg" in
+    *INSTALL_LMOD*) echo "/usr/local/share/lua/5.2"; exit 0 ;;
+    *INSTALL_CMOD*) echo "/usr/local/lib/lua/5.2"; exit 0 ;;
+  esac
+done
+exec ${pkgs.pkg-config}/bin/pkg-config "$@"
+EOF
+    chmod +x "$out/bin/pkg-config"
+  '';
 
-
-#   defaultTestInputs = with pkgs; [
-#     (texlive.combine {
-#       scheme-medium = texlive.scheme-medium;
-#       relsize = texlive.relsize;
-#     })
-#     ghostscript
-#     groff
-#     bison
-#     flex
-#     perl
-#     binutils
-#     gawk
-#     gnumake
-#     m4
-#     lua
-#     fakePkgConfig
-#     glib.dev
-#     automake
-#     autoconf
-#     texinfo
-#     zlib
-#     zlib.dev
-#   ];
-
-}: # `nix flake check -L` 
-
-let
-  testPkgName = "mk-configure";
+  # Deps available ONLY to the test, never the normal build.
+  testInputs = with pkgs; [
+    (texlive.combine {
+      scheme-medium = texlive.scheme-medium;
+      relsize = texlive.relsize;
+    })
+    ghostscript
+    graphviz
+    groff
+    bison
+    flex
+    perl
+    binutils
+    gawk
+    gnumake
+    m4
+    lua
+    fakePkgConfig
+    glib.dev
+    automake
+    autoconf
+    texinfo
+    zlib
+    zlib.dev
+    bmake
+    gcc
+  ];
 in
 {
-  hello-world = testers.runCommand{
-      name = "hello-world-test";
-      buildInputs = [
-          finalAttrs.finalPackage
-      ];
-      script = ''
-          echo hello world
-          touch $out
-      '';
-  };
-#   # Simple help check (Sanity test)
-#   usage = testers.runCommand {
-#     name = "make certain the entire examples dir can compile";
-#     buildInputs = [ mk-configure ];
-#     script = ''
-#       # export HOME=$TMPDIR
-#     '';
-#   };
-}
+  # The examples test-suite only makes sense against an installed
+  # mk-configure (it uses $out/bin/mkcmake and the installed
+  # builtins/features/libexec). finalAttrs.src is the full GitHub fetch of
+  # the repo (examples/ included), so unpack it for the test sources.
+  examples-test-suite = testers.runCommand {
+    name = "mk-configure-examples-test-suite";
+    src = finalAttrs.src;
+    nativeBuildInputs = testInputs;
+    buildInputs = [ finalAttrs.finalPackage ];
+    script = ''
+      export PS2PDF=ps2pdf DOT=dot DVIPS=dvips LATEX=latex
+      unset LUA_LMODDIR LUA_CMODDIR
+      export PKG_CONFIG_PATH="${pkgs.glib.dev}/lib/pkgconfig:${pkgs.zlib.dev}/lib/pkgconfig:${pkgs.lua}/lib/pkgconfig"
 
-#       command --help > output.txt
-#       if grep -q "Usage: command" output.txt; then
-#         echo "Usage check passed ✅"
-#         touch $out
-#       else
-#         echo "Usage check failed ❌"
-#         exit 1
-#       fi
+      cp -r "$src"/. .
+      chmod -R u+w .
+      chmod u+w examples/*
+      patch -p1 < ${./mk-configure-libdeps.patch}
+
+      mkdir -p "$TMPDIR/test-output"
+
+      # Same command that works in the dev-shell, but pointed at the
+      # just-installed mk-configure, and tee'd into a log kept in $TMPDIR
+      # (testers.runCommand is a fixed-output derivation, so $out must stay
+      # an empty file to match the outputHash).
+      (
+        cd examples
+        set -o pipefail
+        export PATH="$PWD/helpers:${fakePkgConfig}/bin:${finalAttrs.finalPackage}/libexec/mk-configure:${finalAttrs.finalPackage}/bin:$PATH"
+        "${finalAttrs.finalPackage}/bin/mkcmake" -f MKCmakefile test 2>&1 \
+          | tee "$TMPDIR/test-output/log"
+      )
+      if [ ! -s "$TMPDIR/test-output/log" ]; then
+        echo "ERROR: test produced no test log" >&2
+        exit 1
+      fi
+      touch $out
+    '';
+  };
+}

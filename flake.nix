@@ -42,7 +42,7 @@ outputs = { self, nixpkgs, flake-utils }:
       # =====================================================================
     in {
         checks = {
-            mk-configure-hello-world = pkgs.mk-configure.tests.hello-world;
+            mk-configure-examples-test-suite = pkgs.mk-configure.tests.examples-test-suite;
             # Additional checks can go here
             # another-test = ...;
         };

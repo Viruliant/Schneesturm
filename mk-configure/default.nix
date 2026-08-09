@@ -14,7 +14,6 @@
   , pkg-config
   , patchelf
   , bmake
-  , makedepend
   , bmkdep
   , texlive
   , graphviz
@@ -98,7 +97,7 @@
     patches = [ ./mk-configure-libdeps.patch ];
 
     nativeBuildInputs = [
-      pkg-config patchelf bmake makedepend bmkdep
+      pkg-config patchelf bmake bmkdep
       (texlive.combine {
         scheme-medium = texlive.scheme-medium;
         relsize = texlive.relsize;
@@ -150,7 +149,7 @@
       done
 
       # Ensure mkdep from bmake is available
-      BPATH="$PWD/.bootstrap-bin:${bmake}/bin:${makedepend}/bin:${bmkdep}/bin:$PATH"
+      BPATH="$PWD/.bootstrap-bin:${bmake}/bin:${bmkdep}/bin:$PATH"
       export PATH="$BPATH"
 
       echo "bootstrap-bin contents:"
@@ -163,7 +162,7 @@
     '';
 
     buildPhase = ''
-      BPATH="$PWD/.bootstrap-bin:${makedepend}/bin:${bmake}/bin:${bmkdep}/bin:$PATH"
+      BPATH="$PWD/.bootstrap-bin:${bmake}/bin:${bmkdep}/bin:$PATH"
       export PATH="$BPATH"
       bmake all \
         PREFIX=$out \
@@ -171,7 +170,7 @@
     '';
 
     installPhase = ''
-    BPATH="$PWD/.bootstrap-bin:${makedepend}/bin:${bmake}/bin:${bmkdep}/bin:$PATH"
+    BPATH="$PWD/.bootstrap-bin:${bmake}/bin:${bmkdep}/bin:$PATH"
     export PATH="$BPATH"
 
     bmake install \
@@ -212,7 +211,7 @@
     '';
 
     postInstall = ''
-      BPATH="$PWD/.bootstrap-bin:${makedepend}/bin:${bmake}/bin:${bmkdep}/bin:$PATH"
+      BPATH="$PWD/.bootstrap-bin:${bmake}/bin:${bmkdep}/bin:$PATH"
       export PATH="$BPATH"
 
       # --- FIX: Move man pages to canonical location ---
@@ -242,7 +241,7 @@
       echo "Manual pages have been moved to $out/share/man/"
 
       # Ensure mkdep and bmkdep are available
-      BPATH="$PWD/.bootstrap-bin:${bmake}/bin:${makedepend}/bin:${bmkdep}/bin:$PATH"
+      BPATH="$PWD/.bootstrap-bin:${bmake}/bin:${bmkdep}/bin:$PATH"
       export PATH="$BPATH"
 
       echo "=== Running configure ==="
@@ -269,61 +268,6 @@
       runHook postCheck
     '';
 
-    # The examples test-suite only makes sense against an installed
-    # mk-configure (it uses $out/bin/mkcmake and the installed
-    # builtins/features/libexec), so run it in the installCheck stage.
-    # It is gated entirely by `runTests` -> doInstallCheck below: when
-    # runTests is false, installCheckPhase (and thus postInstallCheck) is
-    # skipped and no test/inputs are pulled in.
-#     installCheckPhase = ''
-#       runHook preInstallCheck
-#       ${testShellHook}
-#       echo "running install check (source root: $MK_ROOT)"
-#       runHook postInstallCheck
-#     '';
-
-#     postInstallCheck = ''
-#       echo "running the examples test-suite (mkcmake -f MKCmakefile test)"
-# 
-#       BPATH="$PWD/.bootstrap-bin:${pkgs.makedepend}/bin:${pkgs.bmake}/bin:${bmkdep}/bin:$PATH"
-#       export PATH="$BPATH"
-# 
-#       mkdir -p "$out/share/doc/mk-configure"
-# 
-#       # Same command that works in the dev-shell, but pointed at the
-#       # just-installed $out, and tee'd into a log shipped in $out.
-#       (
-#         cd "$MK_ROOT/examples"
-#         set -o pipefail
-#         export PATH="$PWD/helpers:${fakePkgConfig}/bin:$out/libexec/mk-configure:$out/bin:$PATH"
-#         "$out/bin/mkcmake" -f MKCmakefile test 2>&1 \
-#           | tee "$out/share/doc/mk-configure/test-output.log"
-#       )
-#       if [ ! -s "$out/share/doc/mk-configure/test-output.log" ]; then
-#         echo "ERROR: installCheck produced no test log" >&2
-#         exit 1
-#       fi
-#     '';
-
-    # Expose the lua test environment so the flake/devShell can inherit it.
-#     passthru = {
-#       inherit testInputs testShellHook;
-#     };
-
-#     passthru = {
-#         tests = {
-#             hello-world = testers.runCommand{
-#                 name = "hello-world-test";
-#                 buildInputs = [
-#                     finalAttrs.finalPackage
-#                 ];
-#                 script = ''
-#                     echo hello world
-#                     touch $out
-#                 '';
-#             };
-#         };
-#     };
     passthru = {
 #         updateScript = lib.getExe (callPackage ./update.nix { });
         # If your tests.nix needs the package itself, pass finalAttrs.finalPackage

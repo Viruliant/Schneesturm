@@ -31,7 +31,9 @@
     '';
 
     installPhase = ''
+      runHook preInstall
       bmake install PREFIX=$out
+      runHook postInstall
     '';
 
     postInstall = ''
@@ -51,7 +53,11 @@
       ln -sf bmkdep $out/bin/mkdep
 
       # Handle man pages safely
-      if [ -f "$out/share/man/man/bmkdep.1" ]; then
+      if [ -f "$out/man/man1/bmkdep.1" ]; then
+        mv $out/man/man1/bmkdep.1 $out/share/man/man1/
+        rmdir $out/man/man1 2>/dev/null || true
+        rmdir $out/man 2>/dev/null || true
+      elif [ -f "$out/share/man/man/bmkdep.1" ]; then
         mv $out/share/man/man/bmkdep.1 $out/share/man/man1/
         rmdir $out/share/man/man 2>/dev/null || true
       fi
