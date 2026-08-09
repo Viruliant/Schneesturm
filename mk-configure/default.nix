@@ -8,63 +8,7 @@
 # where {$var} is the phase name there is a 
 # `pre{$var}`, `{$var}Phase`, and `post{$var}` for each phase
 #################################################################
-{ pkgs, runTests ? false, testInputs ? null, testShellHook ? null }:
-
-let
-  # defaultTestInputs Deps available ONLY to toggleable test phases
-  # (checkInputs / installCheckInputs), never the normal build.
-  # Fake an FHS-installed lua for mk-configure's example tests: return the
-  # install dirs it would report under /usr/local instead of /nix/store.
-  fakePkgConfig = pkgs.runCommand "mkc-pkg-config" { } ''
-    mkdir -p "$out/bin"
-    cat > "$out/bin/pkg-config" <<'EOF'
-#!/bin/sh
-for arg in "$@"; do
-  case "$arg" in
-    *INSTALL_LMOD*) echo "/usr/local/share/lua/5.2"; exit 0 ;;
-    *INSTALL_CMOD*) echo "/usr/local/lib/lua/5.2"; exit 0 ;;
-  esac
-done
-exec ${pkgs.pkg-config}/bin/pkg-config "$@"
-EOF
-    chmod +x "$out/bin/pkg-config"
-  '';
-  defaultTestInputs = with pkgs; [
-    (texlive.combine {
-      scheme-medium = texlive.scheme-medium;
-      relsize = texlive.relsize;
-    })
-    ghostscript
-    groff
-    bison
-    flex
-    perl
-    binutils
-    gawk
-    gnumake
-    m4
-    lua
-    fakePkgConfig
-    glib.dev
-    automake
-    autoconf
-    texinfo
-    zlib
-    zlib.dev
-  ];
-  # Env setup for the lua example tests: nixpkgs' lua exports LUA_LMODDIR /
-  # LUA_CMODDIR as store paths which would (a) leak /nix/store into test output
-  # and (b) suppress the _mkc_pkgconfig_lua.* checks, so unset them and let the
-  # mkc-pkg-config wrapper provide FHS-style /usr/local values instead.
-  defaultTestShellHook = ''
-    export PS2PDF=ps2pdf DOT=dot DVIPS=dvips LATEX=latex
-    unset LUA_LMODDIR LUA_CMODDIR
-  '';
-  resolvedTestInputs = if testInputs == null then defaultTestInputs else testInputs;
-  resolvedTestShellHook = if testShellHook == null then defaultTestShellHook else testShellHook;
-in
-pkgs.callPackage (
-  { lib
+{   lib
   , stdenv
   , fetchFromGitHub
   , pkg-config
@@ -75,18 +19,73 @@ pkgs.callPackage (
   , texlive
   , graphviz
   , ghostscript
-  , runTests
-  , testInputs
-  , testShellHook
-  }:
-  stdenv.mkDerivation rec {
+  , testers
+  , callPackage
+#   , runTests
+#   , testInputs
+#   , testShellHook
+}: let
+#   # defaultTestInputs Deps available ONLY to toggleable test phases
+#   # (checkInputs / installCheckInputs), never the normal build.
+#   # Fake an FHS-installed lua for mk-configure's example tests: return the
+#   # install dirs it would report under /usr/local instead of /nix/store.
+#   fakePkgConfig = pkgs.runCommand "mkc-pkg-config" { } ''
+#     mkdir -p "$out/bin"
+#     cat > "$out/bin/pkg-config" <<'EOF'
+# #!/bin/sh
+# for arg in "$@"; do
+#   case "$arg" in
+#     *INSTALL_LMOD*) echo "/usr/local/share/lua/5.2"; exit 0 ;;
+#     *INSTALL_CMOD*) echo "/usr/local/lib/lua/5.2"; exit 0 ;;
+#   esac
+# done
+# exec ${pkgs.pkg-config}/bin/pkg-config "$@"
+# EOF
+#     chmod +x "$out/bin/pkg-config"
+#   '';
+#   defaultTestInputs = with pkgs; [
+#     (texlive.combine {
+#       scheme-medium = texlive.scheme-medium;
+#       relsize = texlive.relsize;
+#     })
+#     ghostscript
+#     groff
+#     bison
+#     flex
+#     perl
+#     binutils
+#     gawk
+#     gnumake
+#     m4
+#     lua
+#     fakePkgConfig
+#     glib.dev
+#     automake
+#     autoconf
+#     texinfo
+#     zlib
+#     zlib.dev
+#   ];
+#   # Env setup for the lua example tests: nixpkgs' lua exports LUA_LMODDIR /
+#   # LUA_CMODDIR as store paths which would (a) leak /nix/store into test output
+#   # and (b) suppress the _mkc_pkgconfig_lua.* checks, so unset them and let the
+#   # mkc-pkg-config wrapper provide FHS-style /usr/local values instead.
+#   defaultTestShellHook = ''
+#     export PS2PDF=ps2pdf DOT=dot DVIPS=dvips LATEX=latex
+#     unset LUA_LMODDIR LUA_CMODDIR
+#   '';
+#   resolvedTestInputs = if testInputs == null then defaultTestInputs else testInputs;
+#   resolvedTestShellHook = if testShellHook == null then defaultTestShellHook else testShellHook;
+  in
+
+  stdenv.mkDerivation ( finalAttrs: {
     pname = "mk-configure";
     version = "55a5ce31bfbb4bc215640df731908ddf6d3a7664";
     # nix-shell -p nix-prefetch-github --run "nix-prefetch-github Viruliant mk-configure --rev 55a5ce31bfbb4bc215640df731908ddf6d3a7664"
     src = fetchFromGitHub {
       owner = "Viruliant";
-      repo = pname;
-      rev = version;
+      repo = finalAttrs.pname;
+      rev = finalAttrs.version;
       sha256 = "sha256-ZELo72rhvvPtPAmi7ARbseI0SE+S2bboebeM7rmRmLc=";
     };
 
@@ -151,7 +150,7 @@ pkgs.callPackage (
       done
 
       # Ensure mkdep from bmake is available
-      BPATH="$PWD/.bootstrap-bin:${pkgs.bmake}/bin:${pkgs.makedepend}/bin:${bmkdep}/bin:$PATH"
+      BPATH="$PWD/.bootstrap-bin:${bmake}/bin:${makedepend}/bin:${bmkdep}/bin:$PATH"
       export PATH="$BPATH"
 
       echo "bootstrap-bin contents:"
@@ -164,7 +163,7 @@ pkgs.callPackage (
     '';
 
     buildPhase = ''
-      BPATH="$PWD/.bootstrap-bin:${pkgs.makedepend}/bin:${pkgs.bmake}/bin:${bmkdep}/bin:$PATH"
+      BPATH="$PWD/.bootstrap-bin:${makedepend}/bin:${bmake}/bin:${bmkdep}/bin:$PATH"
       export PATH="$BPATH"
       bmake all \
         PREFIX=$out \
@@ -172,7 +171,7 @@ pkgs.callPackage (
     '';
 
     installPhase = ''
-    BPATH="$PWD/.bootstrap-bin:${pkgs.makedepend}/bin:${pkgs.bmake}/bin:${bmkdep}/bin:$PATH"
+    BPATH="$PWD/.bootstrap-bin:${makedepend}/bin:${bmake}/bin:${bmkdep}/bin:$PATH"
     export PATH="$BPATH"
 
     bmake install \
@@ -213,7 +212,7 @@ pkgs.callPackage (
     '';
 
     postInstall = ''
-      BPATH="$PWD/.bootstrap-bin:${pkgs.makedepend}/bin:${pkgs.bmake}/bin:${bmkdep}/bin:$PATH"
+      BPATH="$PWD/.bootstrap-bin:${makedepend}/bin:${bmake}/bin:${bmkdep}/bin:$PATH"
       export PATH="$BPATH"
 
       # --- FIX: Move man pages to canonical location ---
@@ -243,7 +242,7 @@ pkgs.callPackage (
       echo "Manual pages have been moved to $out/share/man/"
 
       # Ensure mkdep and bmkdep are available
-      BPATH="$PWD/.bootstrap-bin:${pkgs.bmake}/bin:${pkgs.makedepend}/bin:${bmkdep}/bin:$PATH"
+      BPATH="$PWD/.bootstrap-bin:${bmake}/bin:${makedepend}/bin:${bmkdep}/bin:$PATH"
       export PATH="$BPATH"
 
       echo "=== Running configure ==="
@@ -252,17 +251,17 @@ pkgs.callPackage (
         "mkc.environ=CC=gcc CXX=g++ PATH=$BPATH"
     '';
 
-    doCheck = runTests;
-    doInstallCheck = runTests;
+#     doCheck = runTests;
+#     doInstallCheck = runTests;
 
     # Only added to PATH during checkPhase / installCheckPhase,
     # never during the normal build.
-    checkInputs = testInputs;
-    installCheckInputs = testInputs;
+#     checkInputs = testInputs;
+#     installCheckInputs = testInputs;
 
+#       ${testShellHook}
     checkPhase = ''
       runHook preCheck
-      ${testShellHook}
       # Remember the source/build root: installPhase leaves the shell inside
       # presentation/, so installCheckPhase must not rely on $PWD.
       export MK_ROOT="$PWD"
@@ -276,39 +275,59 @@ pkgs.callPackage (
     # It is gated entirely by `runTests` -> doInstallCheck below: when
     # runTests is false, installCheckPhase (and thus postInstallCheck) is
     # skipped and no test/inputs are pulled in.
-    installCheckPhase = ''
-      runHook preInstallCheck
-      ${testShellHook}
-      echo "running install check (source root: $MK_ROOT)"
-      runHook postInstallCheck
-    '';
+#     installCheckPhase = ''
+#       runHook preInstallCheck
+#       ${testShellHook}
+#       echo "running install check (source root: $MK_ROOT)"
+#       runHook postInstallCheck
+#     '';
 
-    postInstallCheck = ''
-      echo "running the examples test-suite (mkcmake -f MKCmakefile test)"
-
-      BPATH="$PWD/.bootstrap-bin:${pkgs.makedepend}/bin:${pkgs.bmake}/bin:${bmkdep}/bin:$PATH"
-      export PATH="$BPATH"
-
-      mkdir -p "$out/share/doc/mk-configure"
-
-      # Same command that works in the dev-shell, but pointed at the
-      # just-installed $out, and tee'd into a log shipped in $out.
-      (
-        cd "$MK_ROOT/examples"
-        set -o pipefail
-        export PATH="$PWD/helpers:${fakePkgConfig}/bin:$out/libexec/mk-configure:$out/bin:$PATH"
-        "$out/bin/mkcmake" -f MKCmakefile test 2>&1 \
-          | tee "$out/share/doc/mk-configure/test-output.log"
-      )
-      if [ ! -s "$out/share/doc/mk-configure/test-output.log" ]; then
-        echo "ERROR: installCheck produced no test log" >&2
-        exit 1
-      fi
-    '';
+#     postInstallCheck = ''
+#       echo "running the examples test-suite (mkcmake -f MKCmakefile test)"
+# 
+#       BPATH="$PWD/.bootstrap-bin:${pkgs.makedepend}/bin:${pkgs.bmake}/bin:${bmkdep}/bin:$PATH"
+#       export PATH="$BPATH"
+# 
+#       mkdir -p "$out/share/doc/mk-configure"
+# 
+#       # Same command that works in the dev-shell, but pointed at the
+#       # just-installed $out, and tee'd into a log shipped in $out.
+#       (
+#         cd "$MK_ROOT/examples"
+#         set -o pipefail
+#         export PATH="$PWD/helpers:${fakePkgConfig}/bin:$out/libexec/mk-configure:$out/bin:$PATH"
+#         "$out/bin/mkcmake" -f MKCmakefile test 2>&1 \
+#           | tee "$out/share/doc/mk-configure/test-output.log"
+#       )
+#       if [ ! -s "$out/share/doc/mk-configure/test-output.log" ]; then
+#         echo "ERROR: installCheck produced no test log" >&2
+#         exit 1
+#       fi
+#     '';
 
     # Expose the lua test environment so the flake/devShell can inherit it.
+#     passthru = {
+#       inherit testInputs testShellHook;
+#     };
+
+#     passthru = {
+#         tests = {
+#             hello-world = testers.runCommand{
+#                 name = "hello-world-test";
+#                 buildInputs = [
+#                     finalAttrs.finalPackage
+#                 ];
+#                 script = ''
+#                     echo hello world
+#                     touch $out
+#                 '';
+#             };
+#         };
+#     };
     passthru = {
-      inherit testInputs testShellHook;
+#         updateScript = lib.getExe (callPackage ./update.nix { });
+        # If your tests.nix needs the package itself, pass finalAttrs.finalPackage
+        tests = callPackage ./tests.nix { inherit finalAttrs; };
     };
 
     meta = {
@@ -317,5 +336,5 @@ pkgs.callPackage (
       license = lib.licenses.bsd2;
       platforms = lib.platforms.unix;
     };
-  }
-) { inherit runTests; testInputs = resolvedTestInputs; testShellHook = resolvedTestShellHook; }
+  })
+# ) { inherit runTests; testInputs = resolvedTestInputs; testShellHook = resolvedTestShellHook; }

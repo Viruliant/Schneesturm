@@ -8,8 +8,7 @@
 # where {$var} is the phase name there is a 
 # `pre{$var}`, `{$var}Phase`, and `post{$var}` for each phase
 #################################################################
-{ pkgs }:
-pkgs.callPackage (
+
   { lib, stdenv, fetchFromGitHub, pkg-config, bmake, patchelf }:
   stdenv.mkDerivation rec {
     pname = "bmkdep";
@@ -65,4 +64,3 @@ pkgs.callPackage (
       platforms = lib.platforms.unix;
     };
   }
-) { }
