@@ -196,15 +196,6 @@
         "mkc.environ=CC=gcc CXX=g++ PATH=$BPATH"
     '';
 
-#     doCheck = runTests;
-#     doInstallCheck = runTests;
-
-    # Only added to PATH during checkPhase / installCheckPhase,
-    # never during the normal build.
-#     checkInputs = testInputs;
-#     installCheckInputs = testInputs;
-
-#       ${testShellHook}
     checkPhase = ''
       runHook preCheck
       # Remember the source/build root: installPhase leaves the shell inside
@@ -215,7 +206,6 @@
     '';
 
     passthru = {
-#         updateScript = lib.getExe (callPackage ./update.nix { });
         # If your tests.nix needs the package itself, pass finalAttrs.finalPackage
         tests = callPackage ./tests.nix { inherit finalAttrs; };
     };
