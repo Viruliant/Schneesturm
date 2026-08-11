@@ -29,6 +29,10 @@ outputs = { self, nixpkgs, flake-utils }:
           bmkdep = prev.callPackage ./bmkdep/default.nix {};
           # Build system on top of bmake and bmkdep
           mk-configure = final.callPackage ./mk-configure/default.nix {};
+          # Standalone example program built from mk-configure's examples/dictd
+          dictd = final.callPackage ./dictd/default.nix {};
+          # Standalone example program built from mk-configure's examples/calc2
+          calc2 = final.callPackage ./calc2/default.nix {};
         }
       );
       inherit (pkgs) lib;
@@ -56,20 +60,28 @@ outputs = { self, nixpkgs, flake-utils }:
     in {
         checks = {
             mk-configure-examples-test-suite = pkgs.mk-configure.tests.examples-test-suite;
+            calc2-example-test = pkgs.calc2.tests.calc2-example-test;
             # Additional checks can go here
             # another-test = ...;
         };
         packages = { # reference drvs defined below
           default = pkgs.symlinkJoin {
             name = "mk-configure-monorepo-combined";
-            paths = [ pkgs.mk-configure pkgs.bmkdep ];
+            paths = [ pkgs.mk-configure pkgs.bmkdep pkgs.calc2 ];
           };
           mk-configure = pkgs.mk-configure;
           bmkdep = pkgs.bmkdep;
+          dictd = pkgs.dictd;
+          calc2 = pkgs.calc2;
         };
         apps.default = {
           type = "app";
           program = "${pkgs.mk-configure}/bin/mkcmake";
+        };
+        devShells = {
+          default = pkgs.mkShell {
+            packages = [ pkgs.calc2 pkgs.mk-configure pkgs.bmake pkgs.bmkdep ];
+          };
         };
     });
 }

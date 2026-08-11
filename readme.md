@@ -6,7 +6,8 @@ git clone https://github.com/Viruliant/Bnix.git
 
 # build the regular package:
 cd ~/test_dir/Bnix
-nix build
+nix build .#default
+
 ```
 
 view files built with `tree ./result | sed 's/ -> .*//'`
