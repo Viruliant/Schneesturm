@@ -7,13 +7,13 @@
   mk-configure,
   zlib,
 }:
-stdenv.mkDerivation (finalAttrs: {
+stdenv.mkDerivation (rec {
   pname = "dictd-example";
   version = "55a5ce31bfbb4bc215640df731908ddf6d3a7664";
   src = fetchFromGitHub {
     owner = "Viruliant";
     repo = "mk-configure";
-    rev = finalAttrs.version;
+    rev = version;
     sha256 = "sha256-ZELo72rhvvPtPAmi7ARbseI0SE+S2bboebeM7rmRmLc=";
     name = "mk-configure-dictd";
   };

@@ -68,12 +68,7 @@ stdenv.mkDerivation rec {
     homepage = "https://github.com/trociny/bmkdep";
     license = lib.licenses.bsd2;
     platforms = lib.platforms.unix;
+    maintainers = [ lib.maintainers.GlassGhost ];
+
   };
 }
-
-# symlinks and
-# remove mv and
-# add myself to maintainers and
-# structured-args
-# swtich from rec to final attrs for version
-

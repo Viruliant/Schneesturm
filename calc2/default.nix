@@ -9,13 +9,13 @@
   flex,
   bison,
 }:
-stdenv.mkDerivation (finalAttrs: {
+stdenv.mkDerivation (rec {
   pname = "calc-example";
   version = "55a5ce31bfbb4bc215640df731908ddf6d3a7664";
   src = fetchFromGitHub {
     owner = "Viruliant";
     repo = "mk-configure";
-    rev = finalAttrs.version;
+    rev = version;
     sha256 = "sha256-ZELo72rhvvPtPAmi7ARbseI0SE+S2bboebeM7rmRmLc=";
     name = "mk-configure-calc2";
   };
@@ -77,8 +77,9 @@ stdenv.mkDerivation (finalAttrs: {
   '';
 
   passthru = {
-    tests = callPackage ./tests.nix { inherit finalAttrs; };
+    tests = callPackage ./tests.nix { inherit version src; };
   };
+
 
   meta = {
     description = "calc example program (flex/bison calculator) built with mkcmake";

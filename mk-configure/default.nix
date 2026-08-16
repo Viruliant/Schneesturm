@@ -23,14 +23,14 @@
 }: let
   in
 
-  stdenv.mkDerivation ( finalAttrs: {
+  stdenv.mkDerivation (rec {
     pname = "mk-configure";
     version = "55a5ce31bfbb4bc215640df731908ddf6d3a7664";
     # nix-shell -p nix-prefetch-github --run "nix-prefetch-github Viruliant mk-configure --rev 55a5ce31bfbb4bc215640df731908ddf6d3a7664"
     src = fetchFromGitHub {
       owner = "Viruliant";
-      repo = finalAttrs.pname;
-      rev = finalAttrs.version;
+      repo = pname;
+      rev = version;
       sha256 = "sha256-ZELo72rhvvPtPAmi7ARbseI0SE+S2bboebeM7rmRmLc=";
     };
 
@@ -206,8 +206,8 @@
     '';
 
     passthru = {
-        # If your tests.nix needs the package itself, pass finalAttrs.finalPackage
-        tests = callPackage ./tests.nix { inherit finalAttrs; };
+        # If your tests.nix needs the package itself, pass finalPackage
+        tests = callPackage ./tests.nix { inherit version src; };
     };
 
     meta = {
@@ -215,6 +215,7 @@
       homepage = "https://github.com/cheusov/mk-configure";
       license = lib.licenses.bsd2;
       platforms = lib.platforms.unix;
+      maintainers = [ lib.maintainers.GlassGhost ];
     };
   })
 # ) { inherit runTests; testInputs = resolvedTestInputs; testShellHook = resolvedTestShellHook; }
