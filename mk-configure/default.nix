@@ -20,6 +20,7 @@
   , ghostscript
   , testers
   , callPackage
+  , installShellFiles
 }: let
   in
 
@@ -43,7 +44,7 @@
     patches = [ ./mk-configure-libdeps.patch ];
 
     nativeBuildInputs = [
-      pkg-config patchelf bmake bmkdep
+      pkg-config patchelf bmake bmkdep installShellFiles
       (texlive.combine {
         scheme-medium = texlive.scheme-medium;
         relsize = texlive.relsize;
@@ -157,43 +158,20 @@
     '';
 
     postInstall = ''
-      BPATH="$PWD/.bootstrap-bin:${bmake}/bin:${bmkdep}/bin:$PATH"
-      export PATH="$BPATH"
-
-      # --- FIX: Move man pages to canonical location ---
-      
-      # 1. Move all .1 files to share/man/man1
+      # Install manpages properly
       if [ -d "$out/man" ]; then
-        find "$out/man" -name "*.1" | while read file; do
-          mv "$file" "$out/share/man/man1/"
+        for f in $(find "$out/man" -name "*.1"); do
+          installManPage "$f"
         done
-        rmdir "$out/man" 2>/dev/null || true
+
+        for f in $(find "$out/man" -name "*.7"); do
+          installManPage "$f"
+        done
+        rm -rf "$out/man"
       fi
-
-      # 2. Move all .7 files to share/man/man7
-      if [ -d "$out/man/man7" ]; then
-        find "$out/man/man7" -name "*.7" | while read file; do
-          mv "$file" "$out/share/man/man7/"
-        done
-        # Note: rmdir only if man7 becomes empty, but usually it has files
-        [ ! $(ls -A "$out/man/man7" 2>/dev/null) ] && rmdir "$out/man/man7" 2>/dev/null || true
-      fi
-
-      # 3. Move any stray .1 files found at root of $out if they existed (safety check)
-      find "$out" -maxdepth 1 -name "*.1" | while read file; do
-          mv "$file" "$out/share/man/man1/"
-        done
-
-      echo "Manual pages have been moved to $out/share/man/"
 
       # Ensure mkdep and bmkdep are available
-      BPATH="$PWD/.bootstrap-bin:${bmake}/bin:${bmkdep}/bin:$PATH"
-      export PATH="$BPATH"
-
-      echo "=== Running configure ==="
-      MKC_VERBOSE=1 bmake configure \
-        PREFIX=$out \
-        "mkc.environ=CC=gcc CXX=g++ PATH=$BPATH"
+      ln -s $out/bin/bmkdep $out/bin/mkdep
     '';
 
     checkPhase = ''
