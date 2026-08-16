@@ -8,6 +8,12 @@ git clone https://github.com/Viruliant/Bnix.git
 cd ~/test_dir/Bnix
 nix build .#default
 
+# enter environment made by flake
+nix develop
+
+# run a example default.nix managed program depending on mk-configure
+calc <<< '( 1 + 1 )'
+
 ```
 
 view files built with `tree ./result | sed 's/ -> .*//'`

@@ -9,64 +9,71 @@
 # `pre{$var}`, `{$var}Phase`, and `post{$var}` for each phase
 #################################################################
 
-  { lib, stdenv, fetchFromGitHub, pkg-config, bmake, patchelf }:
-  stdenv.mkDerivation rec {
-    pname = "bmkdep";
-    version = "f76db982a71c817423e0609ec9625e351e9e9e7d";
-    src = fetchFromGitHub {
-      owner = "Viruliant";
-      repo = pname;
-      rev = version;
-      sha256 = "sha256-dpLLYRY5lpV0jUURyvjr/Mf1JPUEnD0bm9ZJNTKb27Y=";
-    };
+{ lib, stdenv, fetchFromGitHub, pkg-config, bmake, patchelf }:
+stdenv.mkDerivation rec {
+  pname = "bmkdep";
+  version = "f76db982a71c817423e0609ec9625e351e9e9e7d";
+  src = fetchFromGitHub {
+    owner = "Viruliant";
+    repo = pname;
+    rev = version;
+    sha256 = "sha256-dpLLYRY5lpV0jUURyvjr/Mf1JPUEnD0bm9ZJNTKb27Y=";
+  };
 
-    nativeBuildInputs = [ pkg-config patchelf bmake ];
-    buildInputs = [];
-    outputs = [ "out" ];
+  nativeBuildInputs = [ pkg-config patchelf bmake ];
+  buildInputs = [];
+  outputs = [ "out" ];
 
-    preConfigure = ''
-      mkdir -p $out/bin
-      mkdir -p $out/share/man/man1
-      substituteInPlace Makefile --replace "/man/man" "/man"
-    '';
+  preConfigure = ''
+    mkdir -p $out/bin
+    mkdir -p $out/share/man/man1
+    substituteInPlace Makefile --replace "/man/man" "/man"
+  '';
 
-    installPhase = ''
-      runHook preInstall
-      bmake install PREFIX=$out
-      runHook postInstall
-    '';
+  installPhase = ''
+    runHook preInstall
+    bmake install PREFIX=$out
+    runHook postInstall
+  '';
 
-    postInstall = ''
-      echo ">>> POSTINSTALL IS RUNNING, out=$out"
-      # Ensure binaries and man directories are properly organized
-      mkdir -p $out/bin
-      mkdir -p $out/share/man/man1
+  postInstall = ''
+    echo ">>> POSTINSTALL IS RUNNING, out=$out"
+    # Ensure binaries and man directories are properly organized
+    mkdir -p $out/bin
+    mkdir -p $out/share/man/man1
 
-      # If bmkdep binary was placed elsewhere, ensure it's in $out/bin/bmkdep
-      if [ -f "$out/bin/bmkdep" ]; then
-        true
-      elif [ -f "bmkdep" ]; then
-        cp bmkdep $out/bin/bmkdep
-      fi
+    # If bmkdep binary was placed elsewhere, ensure it's in $out/bin/bmkdep
+    if [ -f "$out/bin/bmkdep" ]; then
+      true
+    elif [ -f "bmkdep" ]; then
+      cp bmkdep $out/bin/bmkdep
+    fi
 
-      # Create the standard 'mkdep' alias pointing to 'bmkdep'
-      ln -sf bmkdep $out/bin/mkdep
+    # Create the standard 'mkdep' alias pointing to 'bmkdep'
+    ln -sf bmkdep $out/bin/mkdep
 
-      # Handle man pages safely
-      if [ -f "$out/man/man1/bmkdep.1" ]; then
-        mv $out/man/man1/bmkdep.1 $out/share/man/man1/
-        rmdir $out/man/man1 2>/dev/null || true
-        rmdir $out/man 2>/dev/null || true
-      elif [ -f "$out/share/man/man/bmkdep.1" ]; then
-        mv $out/share/man/man/bmkdep.1 $out/share/man/man1/
-        rmdir $out/share/man/man 2>/dev/null || true
-      fi
-    '';
+    # Handle man pages safely
+    if [ -f "$out/man/man1/bmkdep.1" ]; then
+      mv $out/man/man1/bmkdep.1 $out/share/man/man1/
+      rmdir $out/man/man1 2>/dev/null || true
+      rmdir $out/man 2>/dev/null || true
+    elif [ -f "$out/share/man/man/bmkdep.1" ]; then
+      mv $out/share/man/man/bmkdep.1 $out/share/man/man1/
+      rmdir $out/share/man/man 2>/dev/null || true
+    fi
+  '';
 
-    meta = {
-      description = "This is NetBSD version of mkdep ported to other platforms.";
-      homepage = "https://github.com/trociny/bmkdep";
-      license = lib.licenses.bsd2;
-      platforms = lib.platforms.unix;
-    };
-  }
+  meta = {
+    description = "This is NetBSD version of mkdep ported to other platforms.";
+    homepage = "https://github.com/trociny/bmkdep";
+    license = lib.licenses.bsd2;
+    platforms = lib.platforms.unix;
+  };
+}
+
+# symlinks and
+# remove mv and
+# add myself to maintainers and
+# structured-args
+# swtich from rec to final attrs for version
+

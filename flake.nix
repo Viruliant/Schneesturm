@@ -6,11 +6,10 @@
 #     # nixos-version --json | jq -r '.nixpkgsRevision'
 #     # 6d65bfc1bcef2ef39a239d38e577e92a89fb0f07
 #     # The command above will give you a code to put here:
-    nixpkgs.url = "github:NixOS/nixpkgs/6d65bfc1bcef2ef39a239d38e577e92a89fb0f07";
-#     
+#     nixpkgs.url = "github:NixOS/nixpkgs/6d65bfc1bcef2ef39a239d38e577e92a89fb0f07";
 #     #otherwise use:
 #     # nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-#     nixpkgs.url = "nixpkgs";  # Follows system registry
+    nixpkgs.url = "nixpkgs";  # Follows system registry
   };
 
 outputs = { self, nixpkgs, flake-utils }:
@@ -36,25 +35,25 @@ outputs = { self, nixpkgs, flake-utils }:
         }
       );
       inherit (pkgs) lib;
-# =====================================================================
-# Keep your package definitions portable: use default.nix‑style 
-# derivation inside a flake
-# 
-# Flakes give you structure and reproducibility, but they easily
-# become convoluted. use default.nix‑style derivation inside a
-# flake, to Keep core build logic compatible with
-# 
-# * legacy Nix workflows
-# * overlays
-# * upstream Nixpkgs.
-# 
-# This makes your flake package easy to reuse, contribute, or adapt 
-# without rewriting it from scratch as a traditional default.nix or 
-# turning it into an overlay.
-# 
-# The same `mkDerivation` block can be lifted almost unchanged into 
-# a standalone `default.nix` later.     
-# =====================================================================
+      # =====================================================================
+      # Keep your package definitions portable: use default.nix‑style
+      # derivation inside a flake
+      #
+      # Flakes give you structure and reproducibility, but they easily
+      # become convoluted. use default.nix‑style derivation inside a
+      # flake, to Keep core build logic compatible with
+      #
+      # * legacy Nix workflows
+      # * overlays
+      # * upstream Nixpkgs.
+      #
+      # This makes your flake package easy to reuse, contribute, or adapt
+      # without rewriting it from scratch as a traditional default.nix or
+      # turning it into an overlay.
+      #
+      # The same `mkDerivation` block can be lifted almost unchanged into
+      # a standalone `default.nix` later.
+      # =====================================================================
       # Flake Outputs Assembly
       # =====================================================================
     in {
@@ -81,6 +80,13 @@ outputs = { self, nixpkgs, flake-utils }:
         devShells = {
           default = pkgs.mkShell {
             packages = [ pkgs.calc2 pkgs.mk-configure pkgs.bmake pkgs.bmkdep ];
+            shellHook = ''
+              echo "bnix develop shell env"
+              if [[ $- == *i* ]]; then
+                export PS1="[bnix-dev:\w] "
+              fi
+
+            '';
           };
         };
     });
