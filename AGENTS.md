@@ -7,7 +7,13 @@ Nix flake monorepo that packages `mk-configure` (bmake-based build system) and i
 ```bash
 nix build .#default                 # symlinkJoin of mk-configure + bmkdep + calc2
 nix build .#mk-configure .#bmkdep .#dictd .#calc2
-nix flake check -L                  # runs checks.<system> derivations (examples suite + calc2 test); slow, full rebuild each time
+# Run the test suite (examples suite + calc2 test). NOTE: on Nix >= 2.32
+# `nix flake check` only validates that checks evaluate and skips any check
+# whose output is already in the store/cache, so it never re-runs the tests
+# here. Use --rebuild to force a re-run. The $(nix eval ...) makes the
+# command architecture-agnostic (Nix has no current-system shortcut for
+# the `checks` output, unlike packages/legacyPackages).
+nix build .#checks.$(nix eval --raw --impure --expr 'builtins.currentSystem').mk-configure-examples-test-suite .#checks.$(nix eval --raw --impure --expr 'builtins.currentSystem').calc2-example-test --rebuild -L
 nix develop                         # devShell: calc2, mk-configure, bmake, bmkdep
 ```
 
@@ -35,7 +41,7 @@ nix develop                         # devShell: calc2, mk-configure, bmake, bmkd
 
 - `mk-configure/tests.nix` uses `testers.runCommand`, which is a **fixed-output derivation**: `$out` must be an empty file (`touch $out`), and the test log goes to `$TMPDIR/test-output/log` (kept there because `$out` is content-hashed). It unpacks `finalAttrs.src` (the full GitHub fetch, examples/ included), applies the libdeps patch, then runs the entire `mkcmake -f MKCmakefile test` suite from `examples/` against the installed mk-configure, with a `fakePkgConfig` shim on PATH (mkc examples hardcode `/usr/local` lua paths). `testInputs` (texlive, groff, bison, flex, perl, gawk, glib.dev, texinfo, zlib, ...) are intentionally only in the test, not the build.
 - `calc2/tests.nix` pipes `examples/calc2/expressions.txt` into the installed `calc` and diffs against the first section of `expect.out` (everything before the `====` banner).
-- Run everything with `nix flake check -L`; there is no way to run a single suite faster — it always builds the full package.
+- Run everything with the `nix build ... --rebuild -L` command in the Commands section; there is no way to run a single suite faster — it always builds the full package. `nix flake check -L` only validates evaluation (see Nix >= 2.32 note).
 
 ## dictd & calc2 shared quirks
 

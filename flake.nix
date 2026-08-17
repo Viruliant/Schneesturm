@@ -2,7 +2,7 @@
   description = "Combined monorepo for bmkdep and mk-configure";
 
   inputs = {
-    flake-utils.url = "github:numtide/flake-utils";
+    flake-parts.url = "github:hercules-ci/flake-parts";
 #     # nixos-version --json | jq -r '.nixpkgsRevision'
 #     # 6d65bfc1bcef2ef39a239d38e577e92a89fb0f07
 #     # The command above will give you a code to put here:
@@ -12,8 +12,10 @@
     nixpkgs.url = "nixpkgs";  # Follows system registry
   };
 
-outputs = { self, nixpkgs, flake-utils }:
-  flake-utils.lib.eachDefaultSystem (system:
+outputs = inputs@{ self, nixpkgs, flake-parts, ... }:
+  flake-parts.lib.mkFlake { inherit inputs; } {
+    systems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+    perSystem = { system, ... }:
     let
       # =====================================================================
       # Toggle: when set to true, runs additional build-time tests
@@ -89,5 +91,6 @@ outputs = { self, nixpkgs, flake-utils }:
             '';
           };
         };
-    });
+    };
+  };
 }

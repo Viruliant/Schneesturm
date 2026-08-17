@@ -38,6 +38,8 @@ with the following command:
 
 ```bash
 nix flake check -L
+
+nix build .#checks.$(nix eval --raw --impure --expr 'builtins.currentSystem').mk-configure-examples-test-suite .#checks.$(nix eval --raw --impure --expr 'builtins.currentSystem').calc2-example-test --rebuild -L
 ```
 
 It also verifies that a Nix flake is valid and correctly 
