@@ -6,13 +6,22 @@ git clone https://github.com/Viruliant/Bnix.git
 
 # build the regular package:
 cd ~/test_dir/Bnix
+
+rev="$(nixos-version --json | jq -r '.nixpkgsRevision')"
+nix flake update \
+  --override-input nixpkgs "github:NixOS/nixpkgs/${rev}"
+
+# nix flake update
 nix build .#default
+
+# if build fails checkout the old version of and don't run the flake update
 
 # enter environment made by flake
 nix develop
 
 # run a example default.nix managed program depending on mk-configure
 calc <<< '( 1 + 1 )'
+
 
 ```
 

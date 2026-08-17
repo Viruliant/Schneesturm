@@ -77,7 +77,7 @@ stdenv.mkDerivation (rec {
   '';
 
   passthru = {
-    tests = callPackage ./tests.nix { inherit version src; };
+    tests = callPackage ./tests.nix { inherit src; };
   };
 
 

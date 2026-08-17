@@ -1,7 +1,7 @@
 {
   testers,
   mk-configure,
-  finalAttrs,
+  src,
   pkgs,
 }: let
   # Fake an FHS-installed lua for mk-configure's example tests: return the
@@ -35,7 +35,7 @@ EOF
     perl
     binutils
     gawk
-    gnumake
+#     gnumake
     m4
     lua
     fakePkgConfig
@@ -52,13 +52,14 @@ in
 {
   # The examples test-suite only makes sense against an installed
   # mk-configure (it uses $out/bin/mkcmake and the installed
-  # builtins/features/libexec). finalAttrs.src is the full GitHub fetch of
-  # the repo (examples/ included), so unpack it for the test sources.
+  # builtins/features/libexec). src (inherited from default.nix's passthru)
+  # is the full GitHub fetch of the repo (examples/ included), so unpack it
+  # for the test sources.
   examples-test-suite = testers.runCommand {
     name = "mk-configure-examples-test-suite";
-    src = finalAttrs.src;
+    src = src;
     nativeBuildInputs = testInputs;
-    buildInputs = [ finalAttrs.finalPackage ];
+    buildInputs = [ mk-configure ];
     script = ''
       export PS2PDF=ps2pdf DOT=dot DVIPS=dvips LATEX=latex
       unset LUA_LMODDIR LUA_CMODDIR
@@ -78,8 +79,8 @@ in
       (
         cd examples
         set -o pipefail
-        export PATH="$PWD/helpers:${fakePkgConfig}/bin:${finalAttrs.finalPackage}/libexec/mk-configure:${finalAttrs.finalPackage}/bin:$PATH"
-        "${finalAttrs.finalPackage}/bin/mkcmake" -f MKCmakefile test 2>&1 \
+        export PATH="$PWD/helpers:${fakePkgConfig}/bin:${mk-configure}/libexec/mk-configure:${mk-configure}/bin:$PATH"
+        "${mk-configure}/bin/mkcmake" -f MKCmakefile test 2>&1 \
           | tee "$TMPDIR/test-output/log"
       )
       if [ ! -s "$TMPDIR/test-output/log" ]; then

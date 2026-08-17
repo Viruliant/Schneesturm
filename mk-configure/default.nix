@@ -184,8 +184,9 @@
     '';
 
     passthru = {
-        # If your tests.nix needs the package itself, pass finalPackage
-        tests = callPackage ./tests.nix { inherit version src; };
+        # tests.nix resolves mk-configure itself via callPackage (final
+        # overlay) and gets src inherited here.
+        tests = callPackage ./tests.nix { inherit src; };
     };
 
     meta = {
@@ -196,4 +197,3 @@
       maintainers = [ lib.maintainers.GlassGhost ];
     };
   })
-# ) { inherit runTests; testInputs = resolvedTestInputs; testShellHook = resolvedTestShellHook; }
