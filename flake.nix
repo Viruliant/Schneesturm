@@ -1,8 +1,9 @@
 {
   description = "Combined monorepo for bmkdep and mk-configure";
-
   inputs = {
     flake-parts.url = "github:hercules-ci/flake-parts";
+#nix flake update \
+#      --override-input nixpkgs "github:NixOS/nixpkgs/5880666fd9eb563038431edb35c2d0aa595884e6"
 #     # nixos-version --json | jq -r '.nixpkgsRevision'
 #     # 6d65bfc1bcef2ef39a239d38e577e92a89fb0f07
 #     # The command above will give you a code to put here:
@@ -11,7 +12,6 @@
 #     # nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixpkgs.url = "nixpkgs";  # Follows system registry
   };
-
 outputs = inputs@{ self, nixpkgs, flake-parts, ... }:
   flake-parts.lib.mkFlake { inherit inputs; } {
     systems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
@@ -22,21 +22,6 @@ outputs = inputs@{ self, nixpkgs, flake-parts, ... }:
       # test!". Set to false to skip it.
       # enable_runTests = false;
       # nix build .#mk-configure --no-link --rebuild -L
-      # =====================================================================
-      pkgs = nixpkgs.legacyPackages.${system}.extend(
-        final: prev:{
-          # =====================================================
-          # bmkdep-drv # NetBSD version of mkdep
-          bmkdep = prev.callPackage ./bmkdep/default.nix {};
-          # Build system on top of bmake and bmkdep
-          mk-configure = final.callPackage ./mk-configure/default.nix {};
-          # Standalone example program built from mk-configure's examples/dictd
-          dictd = final.callPackage ./dictd/default.nix {};
-          # Standalone example program built from mk-configure's examples/calc2
-          calc2 = final.callPackage ./calc2/default.nix {};
-        }
-      );
-      inherit (pkgs) lib;
       # =====================================================================
       # Keep your package definitions portable: use default.nix‑style
       # derivation inside a flake
@@ -55,6 +40,21 @@ outputs = inputs@{ self, nixpkgs, flake-parts, ... }:
       #
       # The same `mkDerivation` block can be lifted almost unchanged into
       # a standalone `default.nix` later.
+      # Each name below maps to ./<name>/default.nix, callPackage'd into
+      # the overlay. Add a package by adding one word to this list.
+      localPkgNames = [
+        "bmkdep"
+        "mk-configure"
+        "dictd"
+        "calc2"
+      ];
+      # =====================================================================
+      pkgs = nixpkgs.legacyPackages.${system}.extend (
+        final: prev:
+        prev.lib.genAttrs localPkgNames
+          (name: final.callPackage ./${name}/default.nix { })
+      );
+      inherit (pkgs) lib;
       # =====================================================================
       # Flake Outputs Assembly
       # =====================================================================
@@ -87,7 +87,6 @@ outputs = inputs@{ self, nixpkgs, flake-parts, ... }:
               if [[ $- == *i* ]]; then
                 export PS1="[bnix-dev:\w] "
               fi
-
             '';
           };
         };
