@@ -47,6 +47,7 @@ outputs = inputs@{ self, nixpkgs, flake-parts, ... }:
         "mk-configure"
         "dictd"
         "calc2"
+        "makeheaders"
       ];
       # =====================================================================
       pkgs = nixpkgs.legacyPackages.${system}.extend (
@@ -74,6 +75,7 @@ outputs = inputs@{ self, nixpkgs, flake-parts, ... }:
           bmkdep = pkgs.bmkdep;
           dictd = pkgs.dictd;
           calc2 = pkgs.calc2;
+          makeheaders = pkgs.makeheaders;
         };
         apps.default = {
           type = "app";
@@ -81,7 +83,7 @@ outputs = inputs@{ self, nixpkgs, flake-parts, ... }:
         };
         devShells = {
           default = pkgs.mkShell {
-            packages = [ pkgs.calc2 pkgs.mk-configure pkgs.bmake pkgs.bmkdep ];
+            packages = [ pkgs.makeheaders pkgs.calc2 pkgs.mk-configure pkgs.bmake pkgs.bmkdep ];
             shellHook = ''
               echo "bnix develop shell env"
               if [[ $- == *i* ]]; then
