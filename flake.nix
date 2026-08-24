@@ -79,27 +79,6 @@
                   (lib.filterAttrs (_: lib.isDerivation) (pkgs.${name}.tests or { }));
             in
             lib.foldl' (acc: name: acc // testsFor name) { } localPkgNames;
-#           checks =
-#             let
-#               # Pull passthru.tests off each package (defaults to {} if the
-#               # package doesn't define any), and flatten into "<pkgname>-<testname>".
-# #               testsFor =
-# #                 name:
-# #                 lib.mapAttrs'
-# #                   (testName: testDrv: lib.nameValuePair "${name}-${testName}" testDrv)
-# #                   (pkgs.${name}.tests or { });
-#               testsFor =
-#                 name:
-#                 lib.mapAttrs'
-#                   (
-#                     testName: testDrv:
-#                     lib.nameValuePair
-#                       (if lib.hasPrefix name testName then testName else "${name}-${testName}")
-#                       testDrv
-#                   )
-#                   (pkgs.${name}.tests or { });
-#             in
-#             lib.foldl' (acc: name: acc // testsFor name) { } localPkgNames;
           # To let a new package participate, all it needs is a 
           # passthru.tests = callPackage ./tests.nix { ... }; block like 
           # mk-configure's (your tests.nix returns an attrset of derivations 
