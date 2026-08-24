@@ -38,6 +38,7 @@ with the following command:
 
 ```bash
 nix flake check -L
+nix flake check --rebuild -L
 
 nix build .#checks.$(nix eval --raw --impure --expr 'builtins.currentSystem').mk-configure-examples-test-suite .#checks.$(nix eval --raw --impure --expr 'builtins.currentSystem').calc2-example-test --rebuild -L
 ```
