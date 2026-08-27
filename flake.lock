@@ -18,6 +18,18 @@
         "type": "github"
       }
     },
+    "foobar": {
+      "flake": false,
+      "locked": {
+        "path": "./x10/tmp.default.nix",
+        "type": "path"
+      },
+      "original": {
+        "path": "./x10/tmp.default.nix",
+        "type": "path"
+      },
+      "parent": []
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1787204541,
@@ -50,6 +62,7 @@
     "root": {
       "inputs": {
         "flake-parts": "flake-parts",
+        "foobar": "foobar",
         "nixpkgs": "nixpkgs"
       }
     }

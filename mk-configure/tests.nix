@@ -55,12 +55,11 @@ in
   # builtins/features/libexec). src (inherited from default.nix's passthru)
   # is the full GitHub fetch of the repo (examples/ included), so unpack it
   # for the test sources.
-  examples-test-suite = testers.runCommand {
-    name = "mk-configure-examples-test-suite";
+  examples-test-suite = pkgs.runCommand "mk-configure-examples-test-suite" {
     src = src;
     nativeBuildInputs = testInputs;
     buildInputs = [ mk-configure ];
-    script = ''
+  } ''
       export PS2PDF=ps2pdf DOT=dot DVIPS=dvips LATEX=latex
       unset LUA_LMODDIR LUA_CMODDIR
       export PKG_CONFIG_PATH="${pkgs.glib.dev}/lib/pkgconfig:${pkgs.zlib.dev}/lib/pkgconfig:${pkgs.lua}/lib/pkgconfig"
@@ -70,24 +69,22 @@ in
       chmod u+w examples/*
       patch -p1 < ${./mk-configure-libdeps.patch}
 
-      mkdir -p "$TMPDIR/test-output"
-
       # Same command that works in the dev-shell, but pointed at the
-      # just-installed mk-configure, and tee'd into a log kept in $TMPDIR
-      # (testers.runCommand is a fixed-output derivation, so $out must stay
-      # an empty file to match the outputHash).
+      # just-installed mk-configure. The log is written straight to $out
+      # (so `nix build .#checks...mk-configure-examples-test-suite` puts it
+      # at ./result) and also echoed to stdout so `nix flake check -L`
+      # shows it live.
       (
         cd examples
         set -o pipefail
         export PATH="$PWD/helpers:${fakePkgConfig}/bin:${mk-configure}/libexec/mk-configure:${mk-configure}/bin:$PATH"
         "${mk-configure}/bin/mkcmake" -f MKCmakefile test 2>&1 \
-          | tee "$TMPDIR/test-output/log"
+          | tee "$out"
       )
-      if [ ! -s "$TMPDIR/test-output/log" ]; then
+      if [ ! -s "$out" ]; then
         echo "ERROR: test produced no test log" >&2
         exit 1
       fi
-      touch $out
-    '';
-  };
+  '';
+
 }

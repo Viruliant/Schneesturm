@@ -3,6 +3,12 @@
   inputs = {
     flake-parts.url = "github:hercules-ci/flake-parts";
     nixpkgs.url = "nixpkgs";  # Follows system registry
+#     foobar = { url = "path:/tmp/tmp.c8SCu1myPh"; flake = false;}; # tested working
+    foobar = {
+      url = "path:./x10/tmp.default.nix";
+      flake = false;
+    };
+
   };
   outputs =
     inputs@{ self, nixpkgs, flake-parts, ... }:
