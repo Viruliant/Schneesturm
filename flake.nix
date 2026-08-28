@@ -3,6 +3,15 @@
   inputs = {
     flake-parts.url = "github:hercules-ci/flake-parts";
     nixpkgs.url = "nixpkgs";  # Follows system registry
+    # `minimus` is a git submodule, so its files are outside the parent
+    # flake's tracked tree and can't be read via `./pkgs/minimus/default.nix`
+    # ("subfolder is not tracked by git"). Fetch the submodule checkout
+    # explicitly as a flake input (resolved against the on-disk flake
+    # location, so it works offline) and build from its source.
+    minimus = {
+      url = "git+file:./pkgs/minimus?submodules=1";
+      flake = false;
+    };
 #     foobar = { url = "path:/tmp/tmp.c8SCu1myPh"; flake = false;}; # tested working
 #     foobar = {
 #       url = "path:./x10/tmp.default.nix";
