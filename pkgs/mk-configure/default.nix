@@ -15,7 +15,7 @@
   , patchelf
   , bmake
   , bmkdep
-  , texlive
+  , texliveSmall
   , graphviz
   , ghostscript
   , testers
@@ -44,13 +44,21 @@
     patches = [ ./mk-configure-libdeps.patch ];
 
     nativeBuildInputs = [
-      pkg-config patchelf bmake bmkdep installShellFiles
-      (texlive.combine {
-        scheme-medium = texlive.scheme-medium;
-        relsize = texlive.relsize;
-      })
-      graphviz ghostscript
+      pkg-config
+      patchelf
+      bmake
+      bmkdep
+      installShellFiles
+
+      (texliveSmall.withPackages (ps: [
+        ps.scheme-medium
+        ps.relsize
+      ]))
+
+      graphviz
+      ghostscript
     ];
+
     buildInputs = [];
     outputs = [ "out" ];
 

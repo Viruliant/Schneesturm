@@ -3,47 +3,114 @@
   inputs = {
     flake-parts.url = "github:hercules-ci/flake-parts";
     nixpkgs.url = "nixpkgs";  # Follows system registry
-    # `minimus` is a git submodule, so its files are outside the parent
-    # flake's tracked tree and can't be read via `./pkgs/minimus/default.nix`
-    # ("subfolder is not tracked by git"). Fetch the submodule checkout
-    # explicitly as a flake input (resolved against the on-disk flake
-    # location, so it works offline) and build from its source.
+# Fetch git submodule checkout (resolved against the on-disk flake location, so it works offline)
+# and build from its source root instead.
     minimus = {
       url = "git+file:./pkgs/minimus?submodules=1";
       flake = false;
     };
-#     foobar = { url = "path:/tmp/tmp.c8SCu1myPh"; flake = false;}; # tested working
-#     foobar = {
-#       url = "path:./x10/tmp.default.nix";
-#       flake = false;
-#     };
   };
-  outputs =
-    inputs:
+outputs =
+    inputs@{ self, nixpkgs, flake-parts, ... }:
     let
-      inherit (inputs.nixpkgs) lib;
-      recursivelyImportNixFiles =
-        dir:
-        lib.filter (f: lib.hasSuffix ".nix" (toString f)) (lib.filesystem.listFilesRecursive dir);
-      repoRoot = ./.;
-    in
-    inputs.flake-parts.lib.mkFlake { inherit inputs; } {
-      imports =
-        (
-          lib.pipe (recursivelyImportNixFiles repoRoot) [
-            (lib.filter (f: !(lib.hasPrefix "_" (lib.baseNameOf (toString f)))))
-            (lib.filter (f: !(lib.hasInfix "/pkgs/" (toString f))))
-            (lib.filter (f: !(lib.hasSuffix "flake.nix" (lib.baseNameOf (toString f)))))
-            (lib.filter (f: !(lib.hasSuffix "default.nix" (lib.baseNameOf (toString f)))))
-            (lib.filter (f: !(lib.hasInfix "/minimus/" (toString f))))
-            (lib.filter (f: !(lib.hasInfix "/x10examples/" (toString f))))
-          ]
-        )
-        ++ [ inputs.flake-parts.flakeModules.modules ];
-      _module.args = {
-        inherit repoRoot;
+      lib = nixpkgs.lib;
+
+      # Standard tracked local directories under pkgs/
+      trackedPkgNames =
+        let
+          entries = builtins.readDir (self.outPath + "/pkgs");
+        in
+        lib.filter
+          (name:
+            entries.${name} == "directory"
+            && !lib.hasPrefix "." name
+            && builtins.pathExists (self.outPath + "/pkgs/${name}/default.nix")
+          )
+          (builtins.attrNames entries);
+
+      # Explicit mapping for submodules/inputs built via default.nix
+      inputPkgs = {
+        minimus = inputs.minimus + "/default.nix";
       };
 
-      systems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+      # Combined list of package names
+      localPkgNames = trackedPkgNames ++ (builtins.attrNames inputPkgs);
+
+      overlay = final: prev:
+        let
+          localDrvMap = lib.genAttrs trackedPkgNames (name:
+            final.callPackage (self.outPath + "/pkgs/${name}/default.nix") { }
+          );
+          inputDrvMap = lib.mapAttrs (name: path:
+            final.callPackage path { }
+          ) inputPkgs;
+        in
+        localDrvMap // inputDrvMap;
+
+      overlays = [ overlay ];
+
+      mkPkgs =
+        system:
+        import nixpkgs {
+          inherit system overlays;
+          config.allowUnfree = true;
+        };
+
+    in
+    flake-parts.lib.mkFlake { inherit inputs; } {
+      systems = [
+        "x86_64-linux"
+        "aarch64-linux"
+        "x86_64-darwin"
+        "aarch64-darwin"
+      ];
+
+      perSystem = { system, ... }:
+        let
+          pkgs = mkPkgs system;
+        in
+        {
+          packages =
+            let
+              pkgSet = lib.genAttrs localPkgNames (name: pkgs.${name});
+            in
+            pkgSet // {
+              default = pkgs.symlinkJoin {
+                name = "monorepo-combined";
+                paths = lib.attrValues pkgSet;
+              };
+            };
+
+          checks =
+            let
+              testsFor =
+                name:
+                lib.mapAttrs'
+                  (testName: testDrv:
+                    lib.nameValuePair
+                      (if lib.hasPrefix name testName
+                       then testName
+                       else "${name}-${testName}")
+                      testDrv
+                  )
+                  (lib.filterAttrs (_: lib.isDerivation) (pkgs.${name}.tests or { }));
+            in
+            lib.foldl' (acc: name: acc // testsFor name) { } localPkgNames;
+
+          apps.default = {
+            type = "app";
+            program = "${pkgs.${localPkgNames.__head__}}/bin/${localPkgNames.__head__}";
+          };
+
+          devShells.default = pkgs.mkShell {
+            packages = (map (name: pkgs.${name}) localPkgNames);
+            shellHook = ''
+              echo "monorepo dev shell"
+              if [[ $- == *i* ]]; then
+                export PS1="[monorepo:\w] "
+              fi
+            '';
+          };
+        };
     };
 }
