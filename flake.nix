@@ -1,5 +1,5 @@
 {
-  description = "monorepo for testing default.nix files";
+  description = "monorepo for testing package.nix files";
   inputs = {
     flake-parts.url = "github:hercules-ci/flake-parts";
     nixpkgs.url = "nixpkgs";  # Follows system registry

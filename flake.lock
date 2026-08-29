@@ -18,26 +18,31 @@
         "type": "github"
       }
     },
-    "foobar": {
+    "minimus": {
       "flake": false,
       "locked": {
-        "path": "./x10/tmp.default.nix",
-        "type": "path"
+        "lastModified": 1788026915,
+        "narHash": "sha256-jH6TLiLlOMsEKO3zDSzmxt+C2wgMkREDZifCiriyY9s=",
+        "ref": "refs/heads/main",
+        "rev": "64ecaaf0c9591c43848ba72ca7e05de65f880bde",
+        "revCount": 20,
+        "submodules": true,
+        "type": "git",
+        "url": "file:./pkgs/minimus"
       },
       "original": {
-        "path": "./x10/tmp.default.nix",
-        "type": "path"
-      },
-      "parent": []
+        "submodules": true,
+        "type": "git",
+        "url": "file:./pkgs/minimus"
+      }
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1787204541,
-        "narHash": "sha256-OURZPknrTjQrlNyxPdqzyqmU/81Wes1CUP/Ft1Rv/YI=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "5880666fd9eb563038431edb35c2d0aa595884e6",
-        "type": "github"
+        "lastModified": 1787814960,
+        "narHash": "sha256-4Opnii0iGg8Dk8/rZ2IYh/HCHvg1B+Us5+Qg+Qy5c18=",
+        "rev": "c27cdad491a991b11ed731760aa2ef8db0cb0410",
+        "type": "tarball",
+        "url": "https://releases.nixos.org/nixpkgs/nixpkgs-26.11pre1062790.c27cdad491a9/nixexprs.tar.xz"
       },
       "original": {
         "id": "nixpkgs",
@@ -62,7 +67,7 @@
     "root": {
       "inputs": {
         "flake-parts": "flake-parts",
-        "foobar": "foobar",
+        "minimus": "minimus",
         "nixpkgs": "nixpkgs"
       }
     }

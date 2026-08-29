@@ -12,13 +12,13 @@ let
       (name:
         entries.${name} == "directory"
         && !lib.hasPrefix "." name
-        && builtins.pathExists (inputs.self.outPath + "/pkgs/${name}/default.nix")
+        && builtins.pathExists (inputs.self.outPath + "/pkgs/${name}/package.nix")
       )
       (builtins.attrNames entries);
 
-  # Explicit mapping for submodules/inputs built via default.nix
+  # Explicit mapping for submodules/inputs built via package.nix
   inputPkgs = {
-    minimus = inputs.minimus + "/default.nix";
+    minimus = inputs.minimus + "/package.nix";
   };
 
   # Combined list of package names
@@ -27,7 +27,7 @@ let
   overlay = final: prev:
     let
       localDrvMap = lib.genAttrs trackedPkgNames (name:
-        final.callPackage (inputs.self.outPath + "/pkgs/${name}/default.nix") { }
+        final.callPackage (inputs.self.outPath + "/pkgs/${name}/package.nix") { }
       );
       inputDrvMap = lib.mapAttrs (name: path:
         final.callPackage path { }
