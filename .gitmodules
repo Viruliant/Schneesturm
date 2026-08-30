@@ -1,0 +1,3 @@
+[submodule "pkgs/PIthon"]
+	path = pkgs/PIthon
+	url = git@github.com:Viruliant/PIthon.git

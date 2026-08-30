@@ -1,5 +1,5 @@
 #################################################################
-# `pkgs.callPackage` convention for `default.nix` files
+# `pkgs.callPackage` convention for `package.nix` files
 
 # a Nix expression that exports a `pure` = reproducible function, 
 # used to create a derivation.

@@ -3,48 +3,30 @@
 let
   lib = nixpkgs.lib;
 
-  # Standard tracked local directories under pkgs/
-  trackedPkgNames =
-    let
-      entries = builtins.readDir (inputs.self.outPath + "/pkgs");
-    in
-    lib.filter
-      (name:
-        entries.${name} == "directory"
-        && !lib.hasPrefix "." name
-        && builtins.pathExists (inputs.self.outPath + "/pkgs/${name}/package.nix")
-      )
-      (builtins.attrNames entries);
-
-  # Explicit mapping for submodules/inputs built via package.nix
-  inputPkgs = {
-    minimus = inputs.minimus + "/package.nix";
-  };
-
-  # Combined list of package names
-  localPkgNames = trackedPkgNames ++ (builtins.attrNames inputPkgs);
-
+  # Auto-discover every ./pkgs/<name>/package.nix and expose each one both
+  # under `localPkgs` (for iteration in flake.nix) and at the top level of
+  # `final` (so package.nix files can request each other, e.g. `{ bmkdep }: ...`).
   overlay = final: prev:
     let
-      localDrvMap = lib.genAttrs trackedPkgNames (name:
-        final.callPackage (inputs.self.outPath + "/pkgs/${name}/package.nix") { }
-      );
-      inputDrvMap = lib.mapAttrs (name: path:
-        final.callPackage path { }
-      ) inputPkgs;
+      localPkgs =
+        (lib.filesystem.packagesFromDirectoryRecursive {
+          inherit (final) callPackage;
+          directory = ./pkgs;
+        })
+        // {
+          # minimus is a git submodule; the flake's own source tree doesn't
+          # check submodules out, so it's built from its dedicated input instead.
+          minimus = final.callPackage (inputs.minimus + "/package.nix") { };
+        };
     in
-    localDrvMap // inputDrvMap;
+    localPkgs // { inherit localPkgs; };
 
-  overlays = [ overlay ];
-
-  mkPkgs =
-    system:
-    import nixpkgs {
-      inherit system overlays;
-      config.allowUnfree = true;
-    };
-
+  mkPkgs = system: import nixpkgs {
+    inherit system;
+    overlays = [ overlay ];
+    config.allowUnfree = true;
+  };
 in
 {
-  inherit localPkgNames overlays mkPkgs;
+  inherit mkPkgs;
 }
