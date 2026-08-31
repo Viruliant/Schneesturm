@@ -9,6 +9,10 @@
       url = "git+file:./pkgs/minimus?submodules=1";
       flake = false;
     };
+    PIthon = {
+      url = "git+file:./pkgs/PIthon?submodules=1";
+      flake = false;
+    };
   };
 
   outputs =
@@ -27,6 +31,7 @@
               # minimus is a git submodule; the flake's own source tree doesn't
               # check submodules out, so it's built from its dedicated input instead.
               minimus = final.callPackage (inputs.minimus + "/package.nix") { };
+              PIthon = final.callPackage (inputs.PIthon + "/package.nix") { };
             };
         in
         localPkgs // { inherit localPkgs; };

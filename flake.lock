@@ -1,5 +1,23 @@
 {
   "nodes": {
+    "PIthon": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1788134659,
+        "narHash": "sha256-tHNRypO3GML6S7tpmYY4xbf7C4EXSKj3qYtW/4X/oJg=",
+        "ref": "refs/heads/main",
+        "rev": "659f760b474372fbbcca1064ec177104619a6e0d",
+        "revCount": 6,
+        "submodules": true,
+        "type": "git",
+        "url": "file:./pkgs/PIthon"
+      },
+      "original": {
+        "submodules": true,
+        "type": "git",
+        "url": "file:./pkgs/PIthon"
+      }
+    },
     "flake-parts": {
       "inputs": {
         "nixpkgs-lib": "nixpkgs-lib"
@@ -21,11 +39,11 @@
     "minimus": {
       "flake": false,
       "locked": {
-        "lastModified": 1788026915,
-        "narHash": "sha256-jH6TLiLlOMsEKO3zDSzmxt+C2wgMkREDZifCiriyY9s=",
+        "lastModified": 1788134410,
+        "narHash": "sha256-slRzJ/lb7XQ5cc9YbimxbwntVtibSBmugX5+mgWuER8=",
         "ref": "refs/heads/main",
-        "rev": "64ecaaf0c9591c43848ba72ca7e05de65f880bde",
-        "revCount": 20,
+        "rev": "d9589a6db062033c3a173c29a76276c504dbb351",
+        "revCount": 24,
         "submodules": true,
         "type": "git",
         "url": "file:./pkgs/minimus"
@@ -67,6 +85,7 @@
     },
     "root": {
       "inputs": {
+        "PIthon": "PIthon",
         "flake-parts": "flake-parts",
         "minimus": "minimus",
         "nixpkgs": "nixpkgs"
