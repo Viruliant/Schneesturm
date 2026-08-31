@@ -3,11 +3,11 @@
     "PIthon": {
       "flake": false,
       "locked": {
-        "lastModified": 1788134659,
-        "narHash": "sha256-tHNRypO3GML6S7tpmYY4xbf7C4EXSKj3qYtW/4X/oJg=",
+        "lastModified": 1788141516,
+        "narHash": "sha256-2eMb+9GSVpUMAkZiwjlWXQoTuLt7Thw4DZMf4sG0lX0=",
         "ref": "refs/heads/main",
-        "rev": "659f760b474372fbbcca1064ec177104619a6e0d",
-        "revCount": 6,
+        "rev": "360fbd798247b4225083e1e1ffb90a25a7200e2c",
+        "revCount": 17,
         "submodules": true,
         "type": "git",
         "url": "file:./pkgs/PIthon"
@@ -39,11 +39,11 @@
     "minimus": {
       "flake": false,
       "locked": {
-        "lastModified": 1788134410,
-        "narHash": "sha256-slRzJ/lb7XQ5cc9YbimxbwntVtibSBmugX5+mgWuER8=",
+        "lastModified": 1788139685,
+        "narHash": "sha256-5DS7o2XYaz84aflUwfR4FO4W7CsuJeBh3KtmaojfW/U=",
         "ref": "refs/heads/main",
-        "rev": "d9589a6db062033c3a173c29a76276c504dbb351",
-        "revCount": 24,
+        "rev": "1529dcf35917840788216bd299b5325b57ab8bda",
+        "revCount": 27,
         "submodules": true,
         "type": "git",
         "url": "file:./pkgs/minimus"
