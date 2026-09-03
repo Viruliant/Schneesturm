@@ -53,6 +53,11 @@ working, ask the user:
 "Do you wish to run `./unstage_nix_build.sh` and prepare an 
 actual commit?"
 
+Remember `./stage_nix_build.sh` automatically runs 
+`./unstage_nix_build.sh` so you can focus on running just 
+`./stage_nix_build.sh` and `nix build` until we get everything 
+fixed.
+
 ---
 
 ## `#if INTERFACE` Pattern (makeheaders)
