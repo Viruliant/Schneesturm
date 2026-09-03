@@ -5,12 +5,16 @@
     nixpkgs.url = "nixpkgs"; # Follows system registry
     # Fetch git submodule checkout (resolved against the on-disk flake location,
     # so it works offline) and build from its source root instead.
+  # instead of: inputs.foo.url = "git+file://./my-submodule";
+#     self.submodules = true;
     minimus = {
-      url = "git+file:./pkgs/minimus?submodules=1";
+      url = "git+file:./pkgs/minimus?submodules=1&rev=1b42091ebe23e280a6d4c421f1424a12a1377b8a";
+#       url = ./pkgs/minimus;
       flake = false;
     };
     PIthon = {
-      url = "git+file:./pkgs/PIthon?submodules=1";
+      url = "git+file:./pkgs/PIthon?submodules=1&rev=a101e7b9e57fbe63a805ed3a73b8ba60baca0e52";
+#       url = ./pkgs/PIthon;
       flake = false;
     };
   };
@@ -27,11 +31,12 @@
               inherit (final) callPackage;
               directory = ./pkgs;
             })
-            // {
+            // { # attribute‑set override for localPkgs overlay
               # minimus is a git submodule; the flake's own source tree doesn't
               # check submodules out, so it's built from its dedicated input instead.
               minimus = final.callPackage (inputs.minimus + "/package.nix") { };
-              PIthon = final.callPackage (inputs.PIthon + "/package.nix") { };
+#               PIthon = final.callPackage (inputs.PIthon + "/package.nix") { };
+              PIthon = null;
             };
         in
         localPkgs // { inherit localPkgs; };
