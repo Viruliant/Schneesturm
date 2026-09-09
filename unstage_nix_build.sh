@@ -2,11 +2,19 @@
 utcupdate() { utc=$(date -u "+%Y.%m.%dT%H.%M.%SZ"); } #UTC Time (filename safe)
 utcupdate
 owd="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" #Path to THIS script.
-
 set -euo pipefail
+
+# ## Result
+# 
+# - All your temporary “staging temp test commit for nix build” commits disappear.
+# - All your files remain exactly as they are now.
+# - Your repo history is clean again.
+# - No changes are lost.
 
 # commit_msg="stash_everything"
 commit_msg="staging temp test commit for nix build"
+
+# commit_msg="staging temp test commit"
 
 # Function: remove commits with the staging message, but keep working tree
 undo_commits() {
@@ -71,9 +79,3 @@ This unstages everything but **keeps the working tree exactly as-is**.
 
 ---
 
-## Result
-
-- All your temporary “staging temp test commit for nix build” commits disappear.
-- All your files remain exactly as they are now.
-- Your repo history is clean again.
-- No changes are lost.

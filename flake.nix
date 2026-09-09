@@ -5,20 +5,21 @@
     nixpkgs.url = "nixpkgs"; # Follows system registry
     # Fetch git submodule checkout (resolved against the on-disk flake location,
     # so it works offline) and build from its source root instead.
-  # instead of: inputs.foo.url = "git+file://./my-submodule";
-#     self.submodules = true;
+    # instead of: inputs.foo.url = "git+file://./my-submodule";
+    # self.submodules = true;
     minimus = {
-      url = "git+file:./pkgs/minimus?submodules=1&rev=1b42091ebe23e280a6d4c421f1424a12a1377b8a";
-#       url = ./pkgs/minimus;
+      url = "git+file:./pkgs/minimus?submodules=1&rev=ec83bf95963f6cf33ff321d1acfa0a1b8c8a1926";
+      # url = ./pkgs/minimus;
       flake = false;
     };
     PIthon = {
-      url = "git+file:./pkgs/PIthon?submodules=1&rev=a101e7b9e57fbe63a805ed3a73b8ba60baca0e52";
-#       url = ./pkgs/PIthon;
+      url = "git+file:./pkgs/PIthon?submodules=1&rev=0bf779735fc3d956eb776a4bb2f643ed2c098b5f";
+      # url = ./pkgs/PIthon;
       flake = false;
     };
   };
-
+  # ToDo: symlinkjoin into a bundle
+  # lazy loading
   outputs =
     inputs@{ self, nixpkgs, flake-parts, ... }:
     let
@@ -35,8 +36,8 @@
               # minimus is a git submodule; the flake's own source tree doesn't
               # check submodules out, so it's built from its dedicated input instead.
               minimus = final.callPackage (inputs.minimus + "/package.nix") { };
-#               PIthon = final.callPackage (inputs.PIthon + "/package.nix") { };
-              PIthon = null;
+              PIthon = final.callPackage (inputs.PIthon + "/package.nix") { };
+#               PIthon = null;
             };
         in
         localPkgs // { inherit localPkgs; };
@@ -47,16 +48,9 @@
         config.allowUnfree = true;
       };
     in
-#     let
-#       lib = nixpkgs.lib;
-#       inherit (import ./lib.nix { inherit nixpkgs inputs; }) mkPkgs;
-#     in
     flake-parts.lib.mkFlake { inherit inputs; } {
       systems = [
         "x86_64-linux"
-        "aarch64-linux"
-        "x86_64-darwin"
-        "aarch64-darwin"
       ];
 
       perSystem = { system, ... }:
@@ -90,7 +84,7 @@
           };
 
           devShells.default = pkgs.mkShell {
-            packages = lib.attrValues localPkgs;
+            packages = lib.attrValues localPkgs ++ [ pkgs.mawk ];
             shellHook = ''
               echo "monorepo dev shell"
               if [[ $- == *i* ]]; then
@@ -101,3 +95,7 @@
         };
     };
 }
+# let
+#  lib = nixpkgs.lib;
+#  inherit (import ./lib.nix { inherit nixpkgs inputs; }) mkPkgs;
+# in
