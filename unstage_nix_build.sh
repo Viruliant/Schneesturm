@@ -1,55 +1,67 @@
 #!/usr/bin/env bash
-utcupdate() { utc=$(date -u "+%Y.%m.%dT%H.%M.%SZ"); } #UTC Time (filename safe)
+utcupdate() { utc=$(date -u "+%Y.%m.%dT%H.%M.%SZ"); }
 utcupdate
-owd="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" #Path to THIS script.
+owd="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 set -euo pipefail
 
-# ## Result
-# 
-# - All your temporary “staging temp test commit for nix build” commits disappear.
-# - All your files remain exactly as they are now.
-# - Your repo history is clean again.
-# - No changes are lost.
+commit_msg="${1:-staging temp test commit for nix build}"
 
-# commit_msg="stash_everything"
-commit_msg="staging temp test commit for nix build"
-
-# commit_msg="staging temp test commit"
-
-# Function: remove commits with the staging message, but keep working tree
 undo_commits() {
   local repo="$1"
+  local msg="$2"
+
   cd "$repo"
 
-  # Find the last commit *before* the staging commit
-  last_good=$(git log --grep="$commit_msg" --invert-grep --format="%H" -n 1)
+  last_good=$(git log --grep="$msg" --invert-grep --format="%H" -n 1)
 
   if [[ -z "$last_good" ]]; then
-    echo "No staging commits found in $repo"
+    echo "No commits matching '$msg' found in $repo"
     return
   fi
 
-  echo "Rewriting $repo to remove staging commits…"
+  echo "Rewriting $repo to remove commits matching '$msg'…"
 
-  # Reset to last good commit but keep working tree intact
   git reset --soft "$last_good"
-
-  # Now drop the staging commit(s) from history
   git reset --mixed "$last_good"
 
   echo "Done with $repo"
 }
 
-# Undo commits in submodules
-undo_commits "$owd/pkgs/minimus"
-undo_commits "$owd/pkgs/PIthon"
+# --- Auto-discover submodules from flake.nix ---
+cd "$owd"
 
-# Undo commits in parent repo
-undo_commits "$owd"
+mapfile -t inputs < <(grep -o 'git+file:[^"]*' flake.nix)
+
+for input in "${inputs[@]}"; do
+  # Remove prefix
+  path_with_query="${input#git+file:}"
+
+  # Extract path before '?'
+  submodule_path="${path_with_query%%\?*}"
+
+  # Normalize path
+  submodule_path="${submodule_path#./}"
+
+  full_path="$owd/$submodule_path"
+
+  if [[ -d "$full_path/.git" ]]; then
+    echo "Undoing commits in submodule: $submodule_path"
+    undo_commits "$full_path" "$commit_msg"
+  else
+    echo "Skipping non-git directory: $full_path"
+  fi
+done
+
+# Undo commits in parent repo last
+undo_commits "$owd" "$commit_msg"
 
 exit
 
 #####
+
+./unstage_nix_build.sh "stash_everything"
+./unstage_nix_build.sh "staging temp test commit for nix build"
+./unstage_nix_build.sh "staging temp test commit"
 
 ## What this script does
 

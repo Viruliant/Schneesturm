@@ -8,12 +8,12 @@
     # instead of: inputs.foo.url = "git+file://./my-submodule";
     # self.submodules = true;
     minimus = {
-      url = "git+file:./pkgs/minimus?submodules=1&rev=ec83bf95963f6cf33ff321d1acfa0a1b8c8a1926";
+      url = "git+file:./pkgs/minimus?submodules=1&rev=995a1ef643d6875281cfcc490f3fee82e24a4955";
       # url = ./pkgs/minimus;
       flake = false;
     };
     PIthon = {
-      url = "git+file:./pkgs/PIthon?submodules=1&rev=0bf779735fc3d956eb776a4bb2f643ed2c098b5f";
+      url = "git+file:./pkgs/PIthon?submodules=1&rev=fe0eb64e3d3df64958ccf6e2aaf67194cbfbde29";
       # url = ./pkgs/PIthon;
       flake = false;
     };
