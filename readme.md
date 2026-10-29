@@ -1,4 +1,17 @@
 
+```
+# download with:
+git clone --recurse-submodules https://github.com/Viruliant/Schneesturm.git ~/Schneesturm
+
+# enter environment with:
+cd ~/Schneesturm && \
+./stage_nix_build.sh && \ 
+nix develop
+
+# run an example program
+PIthon
+```
+
 ```bash
 mkdir ~/test_dir
 cd ~/test_dir
