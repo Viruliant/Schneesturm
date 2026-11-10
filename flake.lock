@@ -22,17 +22,17 @@
     "PIthon": {
       "flake": false,
       "locked": {
-        "lastModified": 1794336873,
-        "narHash": "sha256-mlVKwXSBzYuFfdRaWFBMHsAoL/Ld98GtLUBZIBHHnaM=",
+        "lastModified": 1794341157,
+        "narHash": "sha256-QrP6UEsbwLYBDQ8xOaP9v82fUPemWnNVvUlvdIlc1X0=",
         "ref": "master",
-        "rev": "1281a28519daeb87a649cbe8648a198faf7e39f6",
-        "revCount": 22,
+        "rev": "e9cc0f6b1b56cd5061a30d28b477b0acc8035c04",
+        "revCount": 23,
         "submodules": true,
         "type": "git",
         "url": "file:./pkgs/PIthon"
       },
       "original": {
-        "rev": "1281a28519daeb87a649cbe8648a198faf7e39f6",
+        "rev": "e9cc0f6b1b56cd5061a30d28b477b0acc8035c04",
         "submodules": true,
         "type": "git",
         "url": "file:./pkgs/PIthon"

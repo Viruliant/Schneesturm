@@ -13,7 +13,7 @@
       flake = false;
     };
     PIthon = {
-      url = "git+file:./pkgs/PIthon?submodules=1&rev=1281a28519daeb87a649cbe8648a198faf7e39f6";
+      url = "git+file:./pkgs/PIthon?submodules=1&rev=e9cc0f6b1b56cd5061a30d28b477b0acc8035c04";
       # url = ./pkgs/PIthon;
       flake = false;
     };
@@ -89,11 +89,14 @@
             )
             localPkgs;
 
+#           apps.default = {
+#             type = "app";
+#             program = "${localPkgs.${firstPkgName}}/bin/${firstPkgName}";
+#           };
           apps.default = {
             type = "app";
-            program = "${localPkgs.${firstPkgName}}/bin/${firstPkgName}";
+            program = lib.getExe localPkgs.PIthon;
           };
-
           devShells.default = pkgs.mkShell {
             packages = lib.attrValues localPkgs ++ [ pkgs.mawk ];
             shellHook = ''
