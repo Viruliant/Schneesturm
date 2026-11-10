@@ -13,8 +13,8 @@ The digits come from `pichudnov_bs()` in the `PiChudnov` package
 
 - Board is `width * height = 40 * 40 = 1600` cells, so the snake can
   never be longer than **1600** segments.
-- PIthon holds one `uint8_t` per segment, as ASCII chars:
-  `uint8_t snake_chars[1600]`.
+- PIthon holds one `uint8_t` per segment, as ASCII chars, in a
+  `malloc(width * height)` array `snake_chars`.
 - One of those 1600 chars is the `.`, so we only ask PiChudnov for
   **1599** digits (the `3` plus 1598 digits after the point).
 - The call returns `314159…` with no point. To get `3.14159…` we
@@ -28,8 +28,8 @@ fix up head:    [0]='3' [1]='.' [2]='1' [3]='4' ... [1599]
 ```
 
 - Packed size: base 10 is 4 bits per digit, 16 digits per `uint64_t`,
-  so 1599 digits need `ceil(1599 / 16) = 100` words (800 bytes). Small
-  enough for a local array; no `malloc`.
+  so 1599 digits need `ceil(1599 / 16) = 100` words (800 bytes),
+  allocated for the call and freed straight after.
 
 ## 2. Code in `PIthon.c`
 
@@ -39,47 +39,62 @@ Include, next to `<CALLDeck.h>`:
 #include <PiChudnov.h>
 ```
 
-Constants and the array, next to the other game constants. `width` and
-`height` are `const uint8_t`, which C99 does not accept as an array
-size at file scope, hence the `#define`:
+The array lives in `GameState` beside `snake_world` and is sized from
+the board constants, so it follows `width` / `height` automatically:
 
 ```c
-#define SNAKE_MAX 1600                    // must equal width * height
-#define PI_DIGITS (SNAKE_MAX - 1)         // 1599: one slot is the '.'
-#define PI_WORDS  ((PI_DIGITS + 15) / 16) // 100 words, 16 digits each
-
-uint8_t snake_chars[SNAKE_MAX];
+uint8_t *snake_chars; // "3.14159..." one char per segment, head first
 ```
 
-Fill function:
+Fill function. `len` is the array length (1600); it asks for
+`len - 1` digits and sizes the packed buffer with
+`pichudnov_words_needed()`:
 
 ```c
-int fill_snake_chars(void) {
-    uint64_t packed[PI_WORDS];
-    int rc = pichudnov_bs(10, PI_DIGITS, packed, PI_WORDS);
-    if (rc != PICHUDNOV_OK) return rc;
+int fill_snake_chars(uint8_t *chars, size_t len) {
+    size_t digits = len - 1;
+    size_t words = pichudnov_words_needed(10, digits);
+    uint64_t *packed = malloc(words * sizeof *packed);
+    if (!packed) return PICHUDNOV_ERR_INTERNAL;
 
-    // digit i goes to slot i + 1, leaving slot 0 free
-    for (size_t i = 0; i < PI_DIGITS; i++)
-        snake_chars[i + 1] = '0' + ((packed[i / 16] >> (60 - 4 * (i % 16))) & 0xF);
-
-    snake_chars[0] = snake_chars[1]; // the '3'
-    snake_chars[1] = '.';
-    return PICHUDNOV_OK;
+    int rc = pichudnov_bs(10, digits, packed, words);
+    if (rc == PICHUDNOV_OK) {
+        // digit i goes to slot i + 1, leaving slot 0 free for the '3'
+        for (size_t i = 0; i < digits; i++)
+            chars[i + 1] = '0' + ((packed[i / 16] >> (60 - 4 * (i % 16))) & 0xF);
+        chars[0] = chars[1];
+        chars[1] = '.';
+    }
+    free(packed);
+    return rc;
 }
 ```
 
 The shift is the README's general decode formula
 `64 - bits * (i % dpw + 1)` with `bits = 4`, `dpw = 16` filled in.
 
-Call it in `main()` **before** `initscr()`, so a failure can print a
-normal error message and exit without touching ncurses:
+It is called in `main()` **before** `initscr()`, so a failure prints a
+normal error message and exits without touching ncurses:
 
 ```c
-assert(width * height == SNAKE_MAX);
-if (fill_snake_chars() != PICHUDNOV_OK) {
-    fprintf(stderr, "PiChudnov failed\n");
+uint8_t *snake_chars = malloc(width * height);
+if (!snake_chars || fill_snake_chars(snake_chars, width * height) != PICHUDNOV_OK) {
+    fprintf(stderr, "PIthon: could not compute the digits of pi\n");
     return 1;
+}
+```
+
+Start state — a 4-segment snake `3.14`. The head is at the centre and
+the body extends to the right, with the start direction changed from
+right to **left**, so the snake reads `3.14` left to right on screen:
+
+```c
+.snake_length = 4,
+.direction_x = -1,
+...
+for (uint8_t i = 0; i < gs.snake_length; i++) {
+    coord snake_seg = { width / 2 + i, height / 2 };
+    pushEnd_CALLDECK_coord_255(&snake_seg, &gs.snake);
 }
 ```
 
@@ -90,10 +105,10 @@ walks the snake from the head with index `i`:
 // before
 gs->snake_world[snake_seg.y * width + snake_seg.x] = snakechar;
 // after
-gs->snake_world[snake_seg.y * width + snake_seg.x] = snake_chars[i];
+gs->snake_world[snake_seg.y * width + snake_seg.x] = gs->snake_chars[i];
 ```
 
-Nothing else needs to change:
+Nothing else needed to change:
 
 - `snake_world` cells are compared only against `emptychar` (`' '`)
   and `applechar` (`'@'`). Digits and `.` collide with neither, so the
@@ -101,7 +116,7 @@ Nothing else needs to change:
 - `i < snake_length <= 1600`, so `snake_chars[i]` stays in bounds.
 - `DEFINE_CALLDECK(coord, 255)` is a linked list of 255-element
   chunks, not a 255 cap, so the deck already handles 1600 segments.
-- `snakechar` becomes unused and can be removed.
+- `snakechar` was unused afterwards and is removed.
 
 ## 3. `pkgs/PIthon/package.nix`
 
@@ -134,52 +149,52 @@ No `flake.nix` change is needed for that.
 
 ## 4. Checked so far
 
-A scratch program (`/tmp/opencode/snake/t.c`, outside the repo) with
-exactly the `fill_snake_chars()` above, built against the current
-`./result` (`PiChudnov` rev `03bebd4`):
+- Scratch program (`/tmp/opencode/snake/t.c`, outside the repo) using
+  the same decode, built against `PiChudnov` rev `03bebd4`:
+  `pichudnov_bs(10, 1599, …)` returns `PICHUDNOV_OK`, needs 100 words,
+  the array starts `3.141592653589793238` and ends `…097777279380`,
+  and the run takes about 2 ms.
+- `./stage_nix_build.sh && nix build` succeeds with the PIthon changes.
+- `ldd result/bin/PIthon` resolves `libpichudnov.so` from the
+  PiChudnov store path.
+- Running `result/bin/PIthon` in a 100x50 pseudo-terminal for about a
+  second: the status line shows `Snake: 4  Dir:(-1,0)` and the first
+  drawn frame has `3.14` on row 20.
 
-- `pichudnov_bs(10, 1599, …)` returns `PICHUDNOV_OK`;
-  `pichudnov_words_needed(10, 1599)` is 100, matching `PI_WORDS`.
-- The array starts `3.141592653589793238` and ends `…097777279380`.
-- The whole run takes about 2 ms, so computing at startup is fine.
-
-Not done yet: no change has been made to `PIthon.c` or its
-`package.nix`, and nothing has been through `nix build`.
+Not checked: actual play — eating apples and seeing `1`, `5`, `9`, …
+appear on the tail.
 
 ## 5. Things to watch
 
-- **`stage_nix_build.sh` and the PIthon `rev=`.** The script strips
-  `./` from the path before its `sed`, so it searches for
+- **`stage_nix_build.sh` `rev=` fix.** The script stripped `./` from
+  the path before its `sed`, so it searched for
   `git+file:pkgs/PIthon?…` while `flake.nix` contains
-  `git+file:./pkgs/PIthon?…`. From reading the script, the `rev=`
-  will not be rewritten, and `nix build` would keep building the old
-  PIthon commit. If the build output does not show the new digits,
-  check the `rev=` in `flake.nix` against
-  `git -C pkgs/PIthon rev-parse HEAD` first.
+  `git+file:./pkgs/PIthon?…`; the `rev=` was not rewritten and
+  `nix build` kept the old PIthon commit. The `sed` pattern now
+  accepts an optional `./`.
+- **`unstage_nix_build.sh` skips the submodules.** It tests
+  `[[ -d "$full_path/.git" ]]`, but in a submodule `.git` is a file,
+  so the temp commit inside `pkgs/PIthon` is not undone. Not changed.
 - **Reading direction.** The head is `3`, so the text follows the
   snake's body: moving left it reads `3.1415` left to right, moving
   right it appears as `5141.3`.
-- **Start length is 1**, so the game opens with a lone `3`; the `.`,
-  `1` and `4` appear after the first three apples.
 
-## 6. Steps (in order)
+## 6. Steps
 
-1. [ ] `PIthon.c`: add the include, `SNAKE_MAX` / `PI_DIGITS` /
-       `PI_WORDS`, `snake_chars`, `fill_snake_chars()` (§2).
-2. [ ] `PIthon.c`: call it before `initscr()`; draw `snake_chars[i]`;
-       remove `snakechar`.
-3. [ ] `package.nix`: `PiChudnov` argument, `buildInputs`, `-I`,
+1. [x] `PIthon.c`: include, `snake_chars` in `GameState`,
+       `fill_snake_chars()` (§2).
+2. [x] `PIthon.c`: fill before `initscr()`; 4-segment start heading
+       left; draw `gs->snake_chars[i]`; remove `snakechar`.
+3. [x] `package.nix`: `PiChudnov` argument, `buildInputs`, `-I`,
        `-L … -lpichudnov`, rpath (§3).
-4. [ ] `./stage_nix_build.sh && nix build` (see §5 about `rev=`).
-5. [ ] Run `./result/bin/PIthon`, eat a few apples, confirm
-       `3.14…` from the head.
+4. [x] `./stage_nix_build.sh && nix build`.
+5. [ ] Play `./result/bin/PIthon`, eat a few apples, confirm the
+       digits keep following from the head.
 6. [ ] Ask: "Do you wish to run `./unstage_nix_build.sh` and prepare
        an actual commit?"
 
-## Open questions
+## Decisions
 
-- Start with a 4-segment snake so `3.14` is visible immediately, or
-  keep the start length at 1 and grow into it?
-- Fixed `#define SNAKE_MAX 1600` (as above), or `malloc(width *
-  height)` in `GameState` beside `snake_world` so the size follows
-  the board constants automatically?
+- Start with a 4-segment snake `3.14`.
+- `malloc(width * height)` for `snake_chars`, in `GameState` beside
+  `snake_world`.

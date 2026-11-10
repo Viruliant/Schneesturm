@@ -13,7 +13,7 @@
       flake = false;
     };
     PIthon = {
-      url = "git+file:./pkgs/PIthon?submodules=1&rev=fe0eb64e3d3df64958ccf6e2aaf67194cbfbde29";
+      url = "git+file:./pkgs/PIthon?submodules=1&rev=1281a28519daeb87a649cbe8648a198faf7e39f6";
       # url = ./pkgs/PIthon;
       flake = false;
     };

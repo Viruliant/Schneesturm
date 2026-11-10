@@ -46,7 +46,7 @@ upd8submoduleHashes() {
 
     # Update flake.nix
     sed -i \
-      -e "s|\(git+file:$submodule_path?submodules=1&rev=\)[^\"]*|\1$new_rev|" \
+      -e "s|\(git+file:\(\./\)\{0,1\}$submodule_path?submodules=1&rev=\)[^\"]*|\1$new_rev|" \
       flake.nix
 
     # Stage updated submodule
