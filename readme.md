@@ -1,15 +1,25 @@
 
+# Schneesturm
+
+example set of `package.nix` packages interacting inside a flake the same way they would if they were inside of nixpkgs.
+
+## Commands
+
+`nix run github:Viruliant/Schneesturm` will "just work"
+
+but if you run the following commands it will "just work" faster
+because `Lock2LocalPkgs.sh` will set the flake.lock to your
+system packages, and cause less downloading and building.
+
+```bash
+# checkout and run with
+git clone https://github.com/Viruliant/Schneesturm.git ~/Schneesturm
+cd ~/Schneesturm
+# sets flake.lock to match system nixpkgs
+./Lock2LocalPkgs.sh
+# run with # opens the report in the default browser (via `meta.mainProgram`)
+nix build && nix develop
+
+./result/bin/PIthon 
+
 ```
-# download with:
-git clone --recurse-submodules https://github.com/Viruliant/Schneesturm.git ~/Schneesturm
-
-# enter environment with:
-cd ~/Schneesturm && \
-./stage_nix_build.sh && \ 
-nix develop
-
-# run an example program
-PIthon
-```
-
-note [PIthon](https://github.com/Viruliant/PIthon/blob/main/package.nix) depends on [minimus](https://github.com/Viruliant/minimus)
