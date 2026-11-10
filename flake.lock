@@ -1,5 +1,24 @@
 {
   "nodes": {
+    "PIbench": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1794258883,
+        "narHash": "sha256-vaXVvMm2I1NIPhgxVt123d2gC+8a3b+Ii6SPCGmBLD8=",
+        "ref": "refs/heads/main",
+        "rev": "b9bc17cc7884c84d4e2b1e07abfaf9b55fd967c4",
+        "revCount": 1,
+        "submodules": true,
+        "type": "git",
+        "url": "file:./pkgs/PIbench"
+      },
+      "original": {
+        "rev": "b9bc17cc7884c84d4e2b1e07abfaf9b55fd967c4",
+        "submodules": true,
+        "type": "git",
+        "url": "file:./pkgs/PIbench"
+      }
+    },
     "PIthon": {
       "flake": false,
       "locked": {
@@ -87,6 +106,7 @@
     },
     "root": {
       "inputs": {
+        "PIbench": "PIbench",
         "PIthon": "PIthon",
         "flake-parts": "flake-parts",
         "minimus": "minimus",

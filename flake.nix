@@ -17,6 +17,11 @@
       # url = ./pkgs/PIthon;
       flake = false;
     };
+    PIbench = {
+      url = "git+file:./pkgs/PIbench?submodules=1&rev=b9bc17cc7884c84d4e2b1e07abfaf9b55fd967c4";
+      # url = ./pkgs/PIbench;
+      flake = false;
+    };
   };
   # ToDo: symlinkjoin into a bundle
   # lazy loading
@@ -38,6 +43,7 @@
               minimus = final.callPackage (inputs.minimus + "/package.nix") { };
               PIthon = final.callPackage (inputs.PIthon + "/package.nix") { };
 #               PIthon = null;
+              PIbench = final.callPackage (inputs.PIbench + "/package.nix") { };
             };
         in
         localPkgs // { inherit localPkgs; };
@@ -95,7 +101,3 @@
         };
     };
 }
-# let
-#  lib = nixpkgs.lib;
-#  inherit (import ./lib.nix { inherit nixpkgs inputs; }) mkPkgs;
-# in

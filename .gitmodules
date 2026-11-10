@@ -4,3 +4,6 @@
 [submodule "pkgs/minimus"]
 	path = pkgs/minimus
 	url = git@github.com:Viruliant/minimus.git
+[submodule "pkgs/PIbench"]
+	path = pkgs/PIbench
+	url = git@github.com:Viruliant/PIbench.git
