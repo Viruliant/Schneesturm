@@ -22,6 +22,10 @@
       # url = ./pkgs/PIbench;
       flake = false;
     };
+    PiChudnov = {
+      url = "git+file:./pkgs/PiChudnov?submodules=1&rev=03bebd408c01e56304b277d84b4e8d77aaf374f5";
+      flake = false;
+    };
   };
   # ToDo: symlinkjoin into a bundle
   # lazy loading
@@ -44,6 +48,7 @@
               PIthon = final.callPackage (inputs.PIthon + "/package.nix") { };
 #               PIthon = null;
               PIbench = final.callPackage (inputs.PIbench + "/package.nix") { };
+              PiChudnov = final.callPackage (inputs.PiChudnov + "/package.nix") { };
             };
         in
         localPkgs // { inherit localPkgs; };

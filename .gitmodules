@@ -7,3 +7,6 @@
 [submodule "pkgs/PIbench"]
 	path = pkgs/PIbench
 	url = git@github.com:Viruliant/PIbench.git
+[submodule "pkgs/PiChudnov"]
+	path = pkgs/PiChudnov
+	url = git@github.com:Viruliant/PiChudnov.git

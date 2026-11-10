@@ -38,6 +38,25 @@
         "url": "file:./pkgs/PIthon"
       }
     },
+    "PiChudnov": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1794334747,
+        "narHash": "sha256-u7b4TGbUpLNQRT/UrPvnzKSge39cORXM1/UObn0vE0k=",
+        "ref": "refs/heads/main",
+        "rev": "03bebd408c01e56304b277d84b4e8d77aaf374f5",
+        "revCount": 2,
+        "submodules": true,
+        "type": "git",
+        "url": "file:./pkgs/PiChudnov"
+      },
+      "original": {
+        "rev": "03bebd408c01e56304b277d84b4e8d77aaf374f5",
+        "submodules": true,
+        "type": "git",
+        "url": "file:./pkgs/PiChudnov"
+      }
+    },
     "flake-parts": {
       "inputs": {
         "nixpkgs-lib": "nixpkgs-lib"
@@ -108,6 +127,7 @@
       "inputs": {
         "PIbench": "PIbench",
         "PIthon": "PIthon",
+        "PiChudnov": "PiChudnov",
         "flake-parts": "flake-parts",
         "minimus": "minimus",
         "nixpkgs": "nixpkgs"
