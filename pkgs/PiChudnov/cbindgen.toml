@@ -1,0 +1,5 @@
+language = "C"
+include_guard = "PICHUDNOV_H"
+sys_includes = ["stdint.h", "stddef.h"]
+no_includes = true
+usize_is_size_t = true
