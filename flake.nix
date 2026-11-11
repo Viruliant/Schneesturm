@@ -13,23 +13,33 @@
     let
       lib = nixpkgs.lib;
 
+
       overlay = final: prev:
         let
-          localPkgs =
-            (lib.filesystem.packagesFromDirectoryRecursive {
-              inherit (final) callPackage;
-              directory = ./pkgs;
-            })
-            // { # attribute‑set override for localPkgs overlay
-              # minimus is a git submodule; the flake's own source tree doesn't
-              # check submodules out, so it's built from its dedicated input instead.
-              PIthon = final.callPackage (self + "/pkgs/PIthon/package.nix") { };
-              minimus = final.callPackage (self + "/pkgs/minimus/package.nix") { };
-              PIbench = final.callPackage (self + "/pkgs/PIbench/package.nix") { };
-              PiChudnov = final.callPackage (self + "/pkgs/PiChudnov/package.nix") { };
-            };
+          # Names come from readDir only; values stay lazy. Don't force them here.
+          localPkgs = lib.filesystem.packagesFromDirectoryRecursive {
+            inherit (final) callPackage;
+            directory = ./pkgs;
+          };
         in
         localPkgs // { inherit localPkgs; };
+#       overlay = final: prev:
+#         let
+#           localPkgs =
+#             (lib.filesystem.packagesFromDirectoryRecursive {
+#               inherit (final) callPackage;
+#               directory = ./pkgs;
+#             })
+#             // { # attribute‑set override for localPkgs overlay
+#               # minimus is a git submodule; the flake's own source tree doesn't
+#               # check submodules out, so it's built from its dedicated input instead.
+#               PIthon = final.callPackage (self + "/pkgs/PIthon/package.nix") { };
+#               minimus = final.callPackage (self + "/pkgs/minimus/package.nix") { };
+#               PIbench = final.callPackage (self + "/pkgs/PIbench/package.nix") { };
+#               PiChudnov = final.callPackage (self + "/pkgs/PiChudnov/package.nix") { };
+#             };
+#         in
+#         localPkgs // { inherit localPkgs; };
 
       mkPkgs = system: import nixpkgs {
         inherit system;
@@ -45,8 +55,9 @@
       perSystem = { system, ... }:
         let
           pkgs = mkPkgs system;
-          localPkgs = pkgs.localPkgs;
-          firstPkgName = lib.head (lib.attrNames localPkgs);
+          # Safe to force values here. This drops empty (uncheckout-out submodule)
+          # directories, which show up as `{}` rather than derivations.
+          localPkgs = lib.filterAttrs (_: lib.isDerivation) pkgs.localPkgs;
         in
         {
           packages = localPkgs // {
