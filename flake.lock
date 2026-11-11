@@ -1,62 +1,5 @@
 {
   "nodes": {
-    "PIbench": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1794258883,
-        "narHash": "sha256-vaXVvMm2I1NIPhgxVt123d2gC+8a3b+Ii6SPCGmBLD8=",
-        "ref": "refs/heads/main",
-        "rev": "b9bc17cc7884c84d4e2b1e07abfaf9b55fd967c4",
-        "revCount": 1,
-        "submodules": true,
-        "type": "git",
-        "url": "file:./pkgs/PIbench"
-      },
-      "original": {
-        "rev": "b9bc17cc7884c84d4e2b1e07abfaf9b55fd967c4",
-        "submodules": true,
-        "type": "git",
-        "url": "file:./pkgs/PIbench"
-      }
-    },
-    "PIthon": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1794341157,
-        "narHash": "sha256-QrP6UEsbwLYBDQ8xOaP9v82fUPemWnNVvUlvdIlc1X0=",
-        "ref": "refs/heads/main",
-        "rev": "e9cc0f6b1b56cd5061a30d28b477b0acc8035c04",
-        "revCount": 23,
-        "submodules": true,
-        "type": "git",
-        "url": "file:./pkgs/PIthon"
-      },
-      "original": {
-        "rev": "e9cc0f6b1b56cd5061a30d28b477b0acc8035c04",
-        "submodules": true,
-        "type": "git",
-        "url": "file:./pkgs/PIthon"
-      }
-    },
-    "PiChudnov": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1794334747,
-        "narHash": "sha256-u7b4TGbUpLNQRT/UrPvnzKSge39cORXM1/UObn0vE0k=",
-        "ref": "refs/heads/main",
-        "rev": "03bebd408c01e56304b277d84b4e8d77aaf374f5",
-        "revCount": 2,
-        "submodules": true,
-        "type": "git",
-        "url": "file:./pkgs/PiChudnov"
-      },
-      "original": {
-        "rev": "03bebd408c01e56304b277d84b4e8d77aaf374f5",
-        "submodules": true,
-        "type": "git",
-        "url": "file:./pkgs/PiChudnov"
-      }
-    },
     "flake-parts": {
       "inputs": {
         "nixpkgs-lib": "nixpkgs-lib"
@@ -73,25 +16,6 @@
         "owner": "hercules-ci",
         "repo": "flake-parts",
         "type": "github"
-      }
-    },
-    "minimus": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1788976437,
-        "narHash": "sha256-SBelo+PIS3gqIFBuKJoRtgLt3FeHumVDWvTIOqEcK/k=",
-        "ref": "master",
-        "rev": "995a1ef643d6875281cfcc490f3fee82e24a4955",
-        "revCount": 28,
-        "submodules": true,
-        "type": "git",
-        "url": "file:./pkgs/minimus"
-      },
-      "original": {
-        "rev": "995a1ef643d6875281cfcc490f3fee82e24a4955",
-        "submodules": true,
-        "type": "git",
-        "url": "file:./pkgs/minimus"
       }
     },
     "nixpkgs": {
@@ -125,11 +49,7 @@
     },
     "root": {
       "inputs": {
-        "PIbench": "PIbench",
-        "PIthon": "PIthon",
-        "PiChudnov": "PiChudnov",
         "flake-parts": "flake-parts",
-        "minimus": "minimus",
         "nixpkgs": "nixpkgs"
       }
     }

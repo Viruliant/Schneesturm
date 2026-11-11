@@ -1,34 +1,13 @@
 {
   description = "monorepo for testing package.nix files";
   inputs = {
-    flake-parts.url = "github:hercules-ci/flake-parts";
     nixpkgs.url = "nixpkgs"; # Follows system registry
+    self.submodules = true;
+    flake-parts.url = "github:hercules-ci/flake-parts";
     # Fetch git submodule checkout (resolved against the on-disk flake location,
     # so it works offline) and build from its source root instead.
-    # instead of: inputs.foo.url = "git+file://./my-submodule";
-    # self.submodules = true;
-    minimus = {
-      url = "git+file:./pkgs/minimus?submodules=1&rev=995a1ef643d6875281cfcc490f3fee82e24a4955";
-      # url = ./pkgs/minimus;
-      flake = false;
-    };
-    PIthon = {
-      url = "git+file:./pkgs/PIthon?submodules=1&rev=e9cc0f6b1b56cd5061a30d28b477b0acc8035c04";
-      # url = ./pkgs/PIthon;
-      flake = false;
-    };
-    PIbench = {
-      url = "git+file:./pkgs/PIbench?submodules=1&rev=b9bc17cc7884c84d4e2b1e07abfaf9b55fd967c4";
-      # url = ./pkgs/PIbench;
-      flake = false;
-    };
-    PiChudnov = {
-      url = "git+file:./pkgs/PiChudnov?submodules=1&rev=03bebd408c01e56304b277d84b4e8d77aaf374f5";
-      flake = false;
-    };
   };
-  # ToDo: symlinkjoin into a bundle
-  # lazy loading
+  # ToDo: lazy loading
   outputs =
     inputs@{ self, nixpkgs, flake-parts, ... }:
     let
@@ -44,11 +23,10 @@
             // { # attribute‑set override for localPkgs overlay
               # minimus is a git submodule; the flake's own source tree doesn't
               # check submodules out, so it's built from its dedicated input instead.
-              minimus = final.callPackage (inputs.minimus + "/package.nix") { };
-              PIthon = final.callPackage (inputs.PIthon + "/package.nix") { };
-#               PIthon = null;
-              PIbench = final.callPackage (inputs.PIbench + "/package.nix") { };
-              PiChudnov = final.callPackage (inputs.PiChudnov + "/package.nix") { };
+              PIthon = final.callPackage (self + "/pkgs/PIthon/package.nix") { };
+              minimus = final.callPackage (self + "/pkgs/minimus/package.nix") { };
+              PIbench = final.callPackage (self + "/pkgs/PIbench/package.nix") { };
+              PiChudnov = final.callPackage (self + "/pkgs/PiChudnov/package.nix") { };
             };
         in
         localPkgs // { inherit localPkgs; };
