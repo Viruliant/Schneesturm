@@ -12,8 +12,6 @@
     inputs@{ self, nixpkgs, flake-parts, ... }:
     let
       lib = nixpkgs.lib;
-
-
       overlay = final: prev:
         let
           # Names come from readDir only; values stay lazy. Don't force them here.
@@ -23,24 +21,6 @@
           };
         in
         localPkgs // { inherit localPkgs; };
-#       overlay = final: prev:
-#         let
-#           localPkgs =
-#             (lib.filesystem.packagesFromDirectoryRecursive {
-#               inherit (final) callPackage;
-#               directory = ./pkgs;
-#             })
-#             // { # attribute‑set override for localPkgs overlay
-#               # minimus is a git submodule; the flake's own source tree doesn't
-#               # check submodules out, so it's built from its dedicated input instead.
-#               PIthon = final.callPackage (self + "/pkgs/PIthon/package.nix") { };
-#               minimus = final.callPackage (self + "/pkgs/minimus/package.nix") { };
-#               PIbench = final.callPackage (self + "/pkgs/PIbench/package.nix") { };
-#               PiChudnov = final.callPackage (self + "/pkgs/PiChudnov/package.nix") { };
-#             };
-#         in
-#         localPkgs // { inherit localPkgs; };
-
       mkPkgs = system: import nixpkgs {
         inherit system;
         overlays = [ overlay ];
