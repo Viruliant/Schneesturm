@@ -5,7 +5,13 @@ example set of `package.nix` packages interacting inside a flake the same way th
 
 ## Commands
 
-`nix run github:Viruliant/Schneesturm` will "just work"
+```
+nix run "git+https://github.com/Viruliant/Schneesturm?submodules=1" --refresh
+```
+will "just work" and so will the following but it doesn't check for updates:
+```
+nix run "git+https://github.com/Viruliant/Schneesturm?submodules=1"
+```
 
 but if you run the following commands it will "just work" faster
 because `Lock2LocalPkgs.sh` will set the flake.lock to your
